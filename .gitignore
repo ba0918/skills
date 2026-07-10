@@ -1,0 +1,16 @@
+# cache
+__pycache__
+
+# claude
+.claude/settings.local.json
+.claude/tmp
+.claude/worktrees
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+*~

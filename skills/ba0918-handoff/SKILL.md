@@ -13,7 +13,8 @@ running out, the session is about to be cleared, or a new session is picking up 
 The argument selects the mode: `save` (default) or `restore`.
 
 There is one handoff file per working tree: `.agents/HANDOFF.md` at the project root. It is
-working state, never committed: if it is not ignored by git, warn the user before writing.
+working state, never committed. Save writes it regardless; when git does not ignore it, save
+warns afterwards and proposes the one line to add to `.gitignore` (step 5).
 
 The file is written for the next session's agent, so its layout is fixed. What the agent says
 to the person in front of it is not: those reports follow ordinary readability — plain sentences
@@ -21,8 +22,9 @@ the reader can check against the file, no mandated block.
 
 ## Save
 
-1. Record the current branch (`git branch --show-current`); outside a git repository, record
-   `(none)` and continue.
+1. Record the current branch (`git branch --show-current`) and commit (`git rev-parse HEAD`);
+   outside a git repository, or before the first commit, record `(none)` for what is missing and
+   continue.
 2. If `.agents/HANDOFF.md` already exists and its `branch` differs from the current branch, it
    describes other work. Tell the user what it covers and ask before overwriting. On the same
    branch, overwrite without asking.
@@ -37,7 +39,10 @@ the reader can check against the file, no mandated block.
    - **Cautions** — pitfalls, things not to do
 4. Write `.agents/HANDOFF.md` using the template below, creating `.agents/` if needed. `status`
    is exactly one of `in-progress`, `blocked`, `reviewing`; when unsure, `in-progress`.
-5. Tell the user, in a few sentences, what state the work was left in and what the next session
+5. Check whether git ignores the file (`git check-ignore -q .agents/HANDOFF.md`; skip outside a
+   git repository). If it does not, tell the user the handoff is untracked working state and
+   propose adding `/.agents/HANDOFF.md` to `.gitignore`. Do not edit `.gitignore` yourself.
+6. Tell the user, in a few sentences, what state the work was left in and what the next session
    will do first, and that the next session restores it by running this skill in `restore` mode.
 
 Section headings in the file are fixed tokens and stay in English; the content under them
@@ -47,6 +52,7 @@ follows the language of the conversation.
 ---
 created: {ISO 8601}
 branch: {branch}
+head: {commit sha, or (none)}
 status: {in-progress | blocked | reviewing}
 ---
 
@@ -82,8 +88,12 @@ status: {in-progress | blocked | reviewing}
 1. Read `.agents/HANDOFF.md`. If it does not exist, say so and stop.
 2. Orient the user: what the work is for, where it stood when the last session ended, and what
    to do first. State the file's `created` time and `branch`; if the branch differs from the
-   current one, say so — the file may describe other or finished work. Write it so someone who
-   has not read the file can act on it; do not reproduce the file or re-list its cautions.
+   current one, say so — the file may describe other or finished work. On the same branch,
+   compare `head` with the current commit (`git rev-parse HEAD`). If they differ, report what
+   has landed since the save (`git log --oneline {head}..HEAD`) as information, not as a
+   staleness verdict; if that command fails, say the saved commit is no longer in the history
+   (rewritten by rebase or amend). Write the orientation so someone who has not read the file
+   can act on it; do not reproduce the file or re-list its cautions.
 3. Leave the file in place. The next save overwrites it; deleting it is the user's call.
 
 ## Rules
@@ -93,7 +103,9 @@ status: {in-progress | blocked | reviewing}
   unknown.
 - Secrets never enter a handoff file. Name the category ("the API token in `.env`") instead of
   the value.
-- Save does not run tests, builds, or any other command beyond reading the branch name.
+- The only commands are read-only git queries: save reads the branch, the current commit, and
+  the ignore status of the handoff file; restore reads the current commit and the log between
+  the saved commit and it. No tests, no builds, no writes other than the handoff file.
 
 ## Judgment
 
@@ -108,6 +120,19 @@ until it is stale, and staleness is visible from `created` and `branch` in the r
 would otherwise silently destroy each other's handoff. Worktrees do not collide because each has
 its own `.agents/`; the check covers the one case that does.
 
+**Why save writes before warning about the ignore status.** Save runs when context is nearly
+gone; a question at that point can cost the handoff itself, and the skill already forbids
+interviewing the user. Writing first makes that loss impossible, and the warning afterwards
+costs one sentence. The proposal names the file, not the directory: some repositories keep
+tracked files under `.agents/`, and an ignore rule for the directory would swallow them. Save
+never edits `.gitignore` because a save changes nothing but the handoff.
+
+**Why `head` is recorded, and why it is information rather than a verdict.** `created` and
+`branch` cannot tell a fresh handoff from one saved before a long run of commits on the same
+branch. The commit lets restore show exactly what landed in between. It is not a staleness
+verdict: save, then commit, then clear is an ordinary sequence, and the handoff is current
+although HEAD has moved. The user sees the commits and decides.
+
 **Why the reports have no fixed block.** A labelled block ("Goal / Where we are / Next move")
 can be filled in without telling the reader anything they can act on, and the labels then stand
 in for readability. The file has a fixed layout because an agent parses it; the person needs
@@ -119,6 +144,7 @@ full read to understand the first line.
 
 ## Evidence
 
-- **Save**: `.agents/HANDOFF.md` exists with the template's headings, and a report the user can
-  check against it.
-- **Restore**: an orientation the user can act on, including the file's `created` and `branch`.
+- **Save**: `.agents/HANDOFF.md` exists with the template's headings, a report the user can
+  check against it, and — when git does not ignore the file — the proposed `.gitignore` line.
+- **Restore**: an orientation the user can act on, including the file's `created` and `branch`,
+  and, on the same branch, whether the commit has moved since the save.

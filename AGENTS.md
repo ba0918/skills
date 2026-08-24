@@ -1,27 +1,27 @@
-# AGENTS.md
+# Agent Instructions
 
-This file is the shared project instruction source for Claude Code, Codex CLI, and other agents.
-`CLAUDE.md` must stay a thin wrapper that imports this file with `@AGENTS.md`.
+## Core
 
-## プロジェクト概要
+- 依頼された目的に沿って作業し、範囲を不必要に広げない。
+- 確認済みの事実・推測・未検証の事項を区別する。
+- 変更後は、その変更に適した方法で実際に検証する。
+- 不可逆・破壊的・外部から見える操作は、承認なしに実行しない。
+- プロジェクト固有の指示がここより具体的な場合は、そちらを適用する。
 
-単体で完結するユーティリティスキルを集めたリポジトリ。
-各スキルは相互依存を持たず、`gh skills` 経由で個別にインストールできる。
+## Rule Routing
 
-ワークフロー統合やメタスキルは [claude-skills](https://github.com/ba0918/claude-skills) に置く。
-このリポジトリは「つまみ食い」前提の standalone スキル棚として棲み分ける。
+| When | Read |
+|---|---|
+| Always | ba0918-design, ba0918-placement, ba0918-readability, ba0918-secrets |
+| commit | ba0918-commit |
+| delegate | ba0918-delegation |
+| design | ba0918-reuse |
+| implement | ba0918-tdd |
+| release | ba0918-release |
+| review | ba0918-verification |
 
-## 主要構成
+各ルールはスキル名で参照する。該当するルールをすべて読んでから、そのルールが規定する作業を始める。
 
-- `skills/` — スキル本体。各スキルは `SKILL.md` を持ち、必要に応じて `references/` を含む
+## Project Context
 
-## スキル運用
-
-- 各スキルは単体で完結すること。他スキルへの依存・共有契約は持たない。
-- スキル本文はプラットフォーム非依存の自然言語で記述する。
-  - NG: 固有のツール API 名、固有のモデル名、特定 CLI だけで通じる呼び出し形式
-  - OK: 「シェルコマンドを実行する」「ファイルを読む」「ファイルを編集する」「サブエージェントに委譲する」
-
-## 編集ルール
-
-- `CLAUDE.md` へ直接プロジェクト指示を追加しない。共通指示が必要ならこの `AGENTS.md` を更新する。
+このリポジトリが何か、ビルドとテストの方法、ここだけに適用される規約といったプロジェクト固有の文脈は `PROJECT.md` にある。変更を加える前に読むこと。

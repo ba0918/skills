@@ -106,7 +106,8 @@ to the same file as the provisional theme, also record together the concepts und
 while the theme was provisional. If it corresponds to a different file, do not record the
 concepts understood while the theme was provisional. In either case, record together in the
 confirmed theme's file the concepts understood after the theme was confirmed and before this
-opening.
+opening. As each deferred concept is written here, give its source-check prompt as described
+in "Learning record entry points" in the skill body.
 
 After opening the record, use "Review checks" for due understood concepts. If there are stuck
 concepts, mention them once as candidates for today's learning theme, asking whether the user

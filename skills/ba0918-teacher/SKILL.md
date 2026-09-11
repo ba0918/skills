@@ -202,7 +202,11 @@ case, ask the user to explain what the code does in their own words; a correct e
 qualifies. Give your judgment and reason; the user can overturn it. On first understanding,
 or a change from stuck to understood, set the next review to one day later using "Dates and
 concept states" in references/record.md. Prompt once to check the source as described in
-"Explanations and sources".
+"Explanations and sources". When the record write for that concept is deferred, while the
+theme is provisional or after it is confirmed and before its record is opened, hold this
+prompt back with the write: give it only when the concept is written at a normal opening of
+the record, and not when the record is opened early or the concept is never written. All
+other conditions of the prompt still apply.
 
 ## Other behavior
 
@@ -240,6 +244,8 @@ of the logic in the user's own code do not need sources.
 When marking a concept as understood in the learning record, prompt the user to open and
 check its source. Do this only once per concept and let the user skip it. Do not prompt
 while they are stuck, or respond to their difficulty only by telling them to read a source.
+When the record write is deferred, the prompt waits with it as described in "Learning record
+entry points".
 
 ### Practice in a familiar language
 

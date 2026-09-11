@@ -96,16 +96,48 @@ it only after the user agrees. When creating a new file, ask about experience on
 the experience field with their answer. Follow "Files that cannot be saved" for refusal or
 failure, and continue teaching.
 
-While a theme is provisional, defer all record reads, writes, and review checks. Once the
-theme is confirmed, wait until the current small piece of work is finished, then open its
-record and perform opening review checks. If the confirmed theme corresponds to the same
-file as the provisional theme, also record together the concepts understood while the theme
-was provisional and before this opening. If it corresponds to a different file, do not
-record those concepts.
+While a theme is provisional, defer all record reads, writes, and review checks. If the user
+states a theme while it is provisional, including by asking to change the theme, treat the
+theme as confirmed and leave the provisional theme's file untouched on the provisional
+theme's account; that file is written only if it is also the confirmed theme's file, as
+below. Once the theme is confirmed, wait until the current small piece of work is finished,
+then open its record and perform opening review checks. If the confirmed theme corresponds
+to the same file as the provisional theme, also record together the concepts understood
+while the theme was provisional. If it corresponds to a different file, do not record the
+concepts understood while the theme was provisional. In either case, record together in the
+confirmed theme's file the concepts understood after the theme was confirmed and before this
+opening.
 
 After opening the record, use "Review checks" for due understood concepts. If there are stuck
 concepts, mention them once as candidates for today's learning theme, asking whether the user
 wants to work on them. Do not make stuck concepts into review questions.
+
+## Opening a record early
+
+After a provisional theme is confirmed and before its record is opened as described in
+"Opening a record", the record is not open yet. During that time, defer milestone writes
+until the record is opened.
+If disable, or a theme change that switches record files, requires writing to the confirmed
+theme's record during that time, open the record before writing, the same way as in the
+first paragraph of "Opening a record": read an existing file and check whether it is readable
+under "Reading existing records", or propose a name, create the file only after the user
+agrees, and ask about experience. Never overwrite an unreadable file; follow "Reading existing
+records" for it. Follow "Files that cannot be saved" if the user refuses creation or writing,
+or if writing fails. After opening, also write the concepts deferred for that record as
+described in "Opening a record".
+
+When opening a record early like this, do not perform the opening review checks, do not
+mention stuck concepts, and do not prompt the user to check sources for the deferred
+concepts. If a theme change that switches record files ends that time, open the new theme's
+file on the spot using "Switching record files", and drop the opening that was pending for
+the previous theme, including its opening review checks and stuck-concept mention; the
+previous file is still opened early and written under step 1 of that procedure. During
+disable, teacher mode remains enabled through this opening exchange (name proposal, consent,
+experience question); keep the response marker until the end of teacher mode is announced.
+
+When returning in the same session to a file that was only opened early and whose opening
+review checks have not been performed, perform them then, once, as described in step 3 of
+"Switching record files".
 
 ## Learning milestones
 
@@ -115,15 +147,19 @@ update. Write at these milestones even if every write needs permission; the mile
 already saved survive if the session ends without disable. Do not postpone all writes until
 the end. Apply the per-file failure rule after refusal or failure.
 
-Do not read or write records while the theme is provisional. Do not update them during
-ordinary work. Disable during ordinary work still summarizes the preceding teaching portion
-using "Ending the session".
+Do not read or write records while the theme is provisional. Do not write them after the
+theme is confirmed and before its record is opened; write what was deferred during that time
+when the record is opened (see "Opening a record early"). Do not update them during ordinary
+work. Disable during ordinary work still summarizes the preceding teaching portion using
+"Ending the session".
 
 ## Review checks
 
 On enable, offer only one or two understood concepts whose next review date has arrived,
 oldest due date first. Do not offer every due concept. Do not repeat opening checks when
 returning to the same record file in the same session, including changes between themes.
+The exception is a file that was only opened early and has not had its opening review checks
+yet; see step 3 of "Switching record files".
 
 Ask the user to explain in their own words or write a small code snippet, never choose from
 multiple answers. Give a judgment of remembered, partly remembered, or forgotten, together
@@ -169,15 +205,22 @@ change an already understood concept to stuck.
 
 ## Switching record files
 
+A theme change while the theme is provisional confirms the theme as described in "Opening a
+record"; do not use the steps below for it.
+
 When a theme change corresponds to a different record file:
 
 1. Write a one-line summary of the session so far to the previous file, rewriting this
    session's line if it already exists. Record unresolved concepts for that theme according
-   to "Dates and concept states".
+   to "Dates and concept states". If the previous file has not been opened yet, open it
+   before writing using "Opening a record early".
 2. Read or create the new theme's file using only the first paragraph of "Opening a record";
    perform the review checks in the next step.
 3. Offer one or two due review checks for the new file using "Review checks". Skip this step
    if the file had already been opened in this session before the current theme change.
+   However, if that file was only opened early under "Opening a record early" and its opening
+   review checks have not been performed yet, perform once now what opening a record normally
+   does after reading: the opening review checks and the one-time mention of stuck concepts.
 
 Use the new theme's record for its concepts; do not keep writing them to the previous file.
 Honor the deferred theme change during ordinary work described in the skill body.
@@ -188,7 +231,9 @@ On disable, write the session summary and unresolved concepts according to "Reco
 and "Dates and concept states", and replace what to do next with the latest intentions.
 Keep one summary line per session per file; rewrite the existing line when returning to the
 same file within the session. If disabled during ordinary work, summarize only the teaching
-portion before it. Do not write records if the theme is still provisional.
+portion before it. Do not write records if the theme is still provisional. If the theme is
+confirmed but its record has not been opened yet, open it before writing using "Opening a
+record early".
 
 Display unsaved content for every affected file according to "Files that cannot be saved":
 the whole intended file for write failures or refusals, only this session's added or changed

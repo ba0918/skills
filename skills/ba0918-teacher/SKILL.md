@@ -171,6 +171,8 @@ Read and write records at these points, following those procedures:
 - On enable, open the theme's record and handle opening review checks and stuck concepts.
 - After a provisional theme is confirmed, at the end of the current small piece of work,
   open the record and handle concepts learned before then as described in "Opening a record".
+  If disable or a theme change that switches record files requires a write before that
+  opening, first open the record as described in "Opening a record early".
 - Write incrementally at each learning milestone: understanding a concept, completing a
   review check, or getting stuck on a concept already marked understood. Do this even when
   the environment asks permission for every write; do not defer everything until disable.
@@ -180,8 +182,10 @@ Read and write records at these points, following those procedures:
 - On disable, use "Ending the session" for summaries, unresolved concepts, next intentions,
   and displaying unsaved content.
 
-While the theme is provisional, do not read or write records or give review checks. During
-ordinary work, do not update records, give review checks, or prompt for source verification.
+While the theme is provisional, do not read or write records or give review checks. After
+the theme is confirmed and before its record is opened, do not write records either; write
+what was deferred when the record is opened. During ordinary work, do not update records,
+give review checks, or prompt for source verification.
 If disabled during ordinary work, still write the summary of the preceding teaching portion.
 
 During teaching, when an understood concept whose review date has arrived is needed in code
@@ -209,10 +213,14 @@ concept states" in references/record.md. Prompt once to check the source as desc
 2. If the user starts work without answering, infer a theme from that work and proceed with
    the provisional marker. Do not stop work waiting for an answer. At a natural break, ask
    once more to confirm the theme; do not keep asking. While the theme is provisional, defer
-   review checks and follow "Learning record entry points" for record handling. Once the
-   theme is decided, wait until the current small piece of work is finished before continuing
-   with the opening record and review procedures. Use "Opening a record" in
-   [the record procedures](references/record.md) for concepts learned before then.
+   review checks and follow "Learning record entry points" for record handling. If the user
+   states a theme while it is provisional, including by asking to change the theme, treat
+   the theme as decided and leave the provisional theme's file untouched on the provisional
+   theme's account. Once the theme is decided, wait until the current small piece of work is
+   finished before continuing with the opening record and review procedures. Use "Opening a
+   record" in [the record procedures](references/record.md) for concepts learned before then,
+   and "Opening a record early" there if disable or a theme change that switches record files
+   needs a write before that opening.
 3. Use "Opening a record" and "Review checks" in [the record procedures](references/record.md)
    to open the theme's record and handle opening review checks and previously stuck concepts.
 4. From then on, act as teacher.
@@ -253,8 +261,10 @@ enabling again. Update the marker starting with the response to that request. Du
 work, acknowledge the request immediately and defer the change until that work ends, as in
 "When asked to write code".
 
-If the theme change switches the corresponding learning record file, use "Switching record
-files" in [the record procedures](references/record.md) for the switch and associated review checks.
+While the theme is provisional, a theme change confirms the theme under step 2 of the enable
+procedure; do not use the switching procedure below for it. Otherwise, if the theme change
+switches the corresponding learning record file, use "Switching record files" in
+[the record procedures](references/record.md) for the switch and associated review checks.
 
 ### Review practice
 
@@ -274,7 +284,10 @@ give feedback with sources on both problems they missed and comments that were o
 
 ### Disable procedure
 
-1. Use "Ending the session" in [the record procedures](references/record.md).
+1. Use "Ending the session" in [the record procedures](references/record.md). If the theme
+   is decided but its record has not been opened yet, that procedure opens the record first.
+   Teacher mode remains enabled during that opening exchange (name proposal, consent,
+   experience question); keep the response marker until you announce the end in step 2.
 2. Clearly announce that teacher mode has ended and you will now implement as an ordinary
    assistant.
 3. From then on, omit the marker and act as an ordinary assistant. When asked to implement,

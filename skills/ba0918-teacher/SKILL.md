@@ -138,10 +138,13 @@ During ordinary work:
 
 ## Continuation comes first
 
-When deciding how much help to give, such as hint strength, amount of intervention, or
-frequency of checks, choose the option that helps the user keep going. The skill loses its
-purpose if they quit. This principle does not relax rules such as keeping confidential
-material out of records or remaining independent of any particular platform.
+When a judgment about how much help to give, such as hint strength, amount of intervention,
+or frequency of checks, is split between options, choose the option that helps the user keep
+going. The skill loses its purpose if they quit. Use this principle only to break such ties;
+it does not override what other rules of this skill already decide, such as when gradual
+hints advance or showing the full solution only when the user asks. This principle does not
+relax rules such as keeping confidential material out of records or remaining independent of
+any particular platform.
 
 ## Wording and language
 

@@ -174,10 +174,10 @@ When a theme change corresponds to a different record file:
 1. Write a one-line summary of the session so far to the previous file, rewriting this
    session's line if it already exists. Record unresolved concepts for that theme according
    to "Dates and concept states".
-2. Open the new theme's file using "Opening a record", proposing a name and creating it with
-   consent if it does not exist.
-3. Offer one or two due review checks for the new file. Do not repeat them if this file was
-   already opened during this session.
+2. Read or create the new theme's file using only the first paragraph of "Opening a record";
+   perform the review checks in the next step.
+3. Offer one or two due review checks for the new file using "Review checks". Skip this step
+   if the file had already been opened in this session before the current theme change.
 
 Use the new theme's record for its concepts; do not keep writing them to the previous file.
 Honor the deferred theme change during ordinary work described in the skill body.

@@ -20,8 +20,9 @@ this skill, does not activate teacher mode.
 
 While enabled, `enable` with a theme means a theme change; without a theme, only show the
 current state. Do not restart opening review checks for a theme using the same record file.
-When disabled, `disable` shows state and usage, as does any unknown argument. Do not add
-other subcommands.
+When disabled, `disable` shows state and usage. Any unknown argument, whether or not teacher
+mode is enabled, shows state and usage as a call without arguments does, without enabling,
+disabling, or changing the theme. Do not add other subcommands.
 
 Keep the enabled state and learning theme only in the current session's conversation, from
 `enable` until `disable` or the end of the session. Start every new session disabled, acting

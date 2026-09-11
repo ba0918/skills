@@ -32,10 +32,20 @@ gh skill install ba0918/skills ba0918-handoff --agent <エージェント名> --
 | スキル | 何をするか |
 |---|---|
 | [ba0918-handoff](skills/ba0918-handoff) | 作業中の文脈を `.agents/HANDOFF.md` に保存し、次のセッションで読み込んで続きから始める |
+| [ba0918-teacher](skills/ba0918-teacher) | 実作業でユーザーがコードを書き、レビューするのを、段階的なヒントと学習記録で支える |
 
 `ba0918-handoff` を入れたら、`.gitignore` に `/.agents/HANDOFF.md` を 1 行足しておいてください。引き継ぎファイルは作業中の状態を書き出したもので、コミットする対象ではありません。足し忘れても保存時にスキルが同じ行を提案します。
 
 細かい挙動は各スキルの `SKILL.md` に書いてあります。インストール前に `gh skill preview ba0918/skills <スキル名>` で読むこともできます。
+
+### ba0918-teacher の使い方と注意点
+
+`ba0918-teacher` を `enable [学習テーマ]` で呼ぶと、エージェントがユーザーの学習を支える teacher モードになります。`disable` で終了します。
+
+- 学習記録はリポジトリの外、`~/.agents/ba0918-teacher/` に保存されます。
+- 記録への書き込みのたびに許可を求められる場合は、この置き場所をエージェントの許可設定に足すと、毎回許可する手間を減らせます。
+- `disable` 後も teacher のように振る舞うと感じたら、新しいセッションを始めればリセットされます。
+- Claude Code では、インストールした `SKILL.md` の先頭にある `---` で囲まれた設定欄（frontmatter）に `disable-model-invocation: true` を足すと、ユーザーが呼んだときだけ動くことをより確実にできます。
 
 ## 開発者向け
 

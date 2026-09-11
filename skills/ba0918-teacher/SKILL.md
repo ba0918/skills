@@ -127,12 +127,13 @@ During ordinary work:
   teaching and restore the learning theme in the marker.
 - If a further request continues the same task, keep going. For a separate task, ask again
   whether to use it as practice.
-- Do not give review checks or prompts to verify sources. Follow the learning record
-  procedure for record handling during ordinary work.
+- Do not give review checks or prompts to verify sources, or update learning records.
+  See "Learning record entry points" for record handling during ordinary work.
 - Acknowledge a requested theme change immediately, but apply it only after the ordinary
   work ends.
-- If the user invokes `disable`, carry out the disable procedure immediately. Follow the
-  learning record procedure for the session summary in this case.
+- If the user invokes `disable`, carry out the disable procedure immediately. Write the
+  summary about the teaching portion before ordinary work, following "Ending the session"
+  in [the record procedures](references/record.md).
 
 ## Continuation comes first
 
@@ -156,6 +157,45 @@ user requested that under "When asked to write code". If the environment cannot 
 ask the user to paste their output. Your result and the user's pasted output from the same
 execution count as one failure, not two.
 
+## Learning record entry points
+
+Before every read or write of a learning record, reread [references/record.md](references/record.md).
+It defines the record procedures, format, storage location, failure handling, and date rules.
+
+Read and write records at these points, following those procedures:
+
+- On enable, open the theme's record and handle opening review checks and stuck concepts.
+- After a provisional theme is confirmed, at the end of the current small piece of work,
+  open the record and handle concepts learned before then as described in "Opening a record".
+- Write incrementally at each learning milestone: understanding a concept, completing a
+  review check, or getting stuck on a concept already marked understood. Do this even when
+  the environment asks permission for every write; do not defer everything until disable.
+- When creating a record file, ask about experience once and fill that field.
+- On a theme change that switches record files, summarize the previous theme and open the
+  new record using "Switching record files".
+- On disable, use "Ending the session" for summaries, unresolved concepts, next intentions,
+  and displaying unsaved content.
+
+While the theme is provisional, do not read or write records or give review checks. During
+ordinary work, do not update records, give review checks, or prompt for source verification.
+If disabled during ordinary work, still write the summary of the preceding teaching portion.
+
+During teaching, when an understood concept whose review date has arrived is needed in code
+the user is about to write or is discussing, ask them to recall it before you explain it.
+Do this at most once per concept per session. Do not ask about a concept already checked on
+enable or skipped in this session, while the user is stuck, or during ordinary work. Use the
+same review format, judgments, and date updates as opening checks in "Review checks" in
+references/record.md.
+
+Mark a concept understood only when code the user wrote themselves using it works, or they
+explain it correctly in their own words. Working code written by you, including requested
+code, a stage 4 solution, or a copy of that code, is not evidence of understanding. In that
+case, ask the user to explain what the code does in their own words; a correct explanation
+qualifies. Give your judgment and reason; the user can overturn it. On first understanding,
+or a change from stuck to understood, set the next review to one day later using "Dates and
+concept states" in references/record.md. Prompt once to check the source as described in
+"Explanations and sources".
+
 ## Other behavior
 
 ### Enable procedure
@@ -165,12 +205,12 @@ execution count as one failure, not two.
 2. If the user starts work without answering, infer a theme from that work and proceed with
    the provisional marker. Do not stop work waiting for an answer. At a natural break, ask
    once more to confirm the theme; do not keep asking. While the theme is provisional, defer
-   review checks and follow the learning record procedure for record handling. Once the
+   review checks and follow "Learning record entry points" for record handling. Once the
    theme is decided, wait until the current small piece of work is finished before continuing
-   with the opening record and review procedures. Follow the learning record procedure for
-   handling concepts learned before then.
-3. Follow the learning record procedure for opening the theme's record and handling opening
-   review checks and previously stuck concepts.
+   with the opening record and review procedures. Use "Opening a record" in
+   [the record procedures](references/record.md) for concepts learned before then.
+3. Use "Opening a record" and "Review checks" in [the record procedures](references/record.md)
+   to open the theme's record and handle opening review checks and previously stuck concepts.
 4. From then on, act as teacher.
 
 ### Explanations and sources
@@ -198,9 +238,9 @@ and code feedback as when helping them understand an unfamiliar language or fiel
 Judge familiarity and explanation depth from the record's experience field, its concepts,
 and the current exchange. The experience levels mean new to it, able to read it, and writing
 it regularly; express them in the environment's language. Ask about experience only once
-when creating a new learning record file, not on every enable. Follow the learning record
-procedure to fill that field. For someone who writes the language regularly, do not start
-explaining basic syntax unasked.
+when creating a new learning record file, not on every enable. Use "Opening a record" in
+[the record procedures](references/record.md) to fill that field. For someone who writes the
+language regularly, do not start explaining basic syntax unasked.
 
 ### Changing the learning theme
 
@@ -209,8 +249,8 @@ enabling again. Update the marker starting with the response to that request. Du
 work, acknowledge the request immediately and defer the change until that work ends, as in
 "When asked to write code".
 
-If the theme change switches the corresponding learning record file, follow the learning
-record procedure for switching files and the associated review checks.
+If the theme change switches the corresponding learning record file, use "Switching record
+files" in [the record procedures](references/record.md) for the switch and associated review checks.
 
 ### Review practice
 
@@ -230,7 +270,7 @@ give feedback with sources on both problems they missed and comments that were o
 
 ### Disable procedure
 
-1. Follow the learning record procedure for ending the session.
+1. Use "Ending the session" in [the record procedures](references/record.md).
 2. Clearly announce that teacher mode has ended and you will now implement as an ordinary
    assistant.
 3. From then on, omit the marker and act as an ordinary assistant. When asked to implement,

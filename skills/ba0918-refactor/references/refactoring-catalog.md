@@ -1,8 +1,8 @@
 # Refactoring catalog
 
-Read in step 4 when the person did not name the change. Each pattern pairs why it slows
-understanding with a transformation that keeps behavior, and the trap that turns the
-transformation into a behavior change or a worse read.
+Read in step 4 before accepting a candidate you found yourself. The patterns are common cases,
+not a closed list; the Trap column is the part to check a candidate against, whether or not
+it appears here.
 
 The thresholds under "Signs" are prompts to look, not cut-offs. A borderline case becomes a
 candidate only if someone new to the code would understand the result faster.

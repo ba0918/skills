@@ -100,7 +100,9 @@ had, the site is held and reported, not applied.
 ### 4. Choose improvements
 
 If the person named the change ("rename this", "split this function"), that is the candidate.
-Otherwise read `references/refactoring-catalog.md` and list candidates from it.
+Otherwise look for whatever in the scope slows a reader down, and read
+`references/refactoring-catalog.md` before accepting a candidate you found yourself: it lists
+common cases and, for each, the trap that turns the transformation into a behavior change.
 
 Keep a candidate only if someone new to the code would understand the result faster and more
 accurately than the original. Line count is not the measure: a nested one-line conditional is

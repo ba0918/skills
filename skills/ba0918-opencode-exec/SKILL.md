@@ -86,8 +86,12 @@ Then, in this order:
    reports are relative to it. Record, for the whole repository:
    - the current commit (`git rev-parse HEAD`; record "none" before the first commit);
    - every file with changes and every untracked file git does not ignore
-     (`git status --porcelain --untracked-files=all --no-renames`, which lists untracked files
-     one by one instead of collapsing a directory into one line, and a rename as its two paths);
+     (`git status --porcelain -z --untracked-files=all --no-renames`, which lists untracked files
+     one by one instead of collapsing a directory into one line, and a rename as its two paths).
+     `-z` separates entries with NUL and leaves each path exactly as it is; without it git quotes
+     paths that contain special or non-ASCII characters, and the quoted form is not a path the
+     next command can use. Each entry is two status letters, a space, and the path; take the
+     path after them as it is;
    - the content hash of each of those files (`git hash-object <path>`), or "absent" for a file
      that was deleted.
 
@@ -150,11 +154,12 @@ comparing the repository with the pre-run record. Skip this when nothing was rec
 result then says changes could not be detected.
 
 1. Read the repository's state again, at the repository root and the same way as the pre-run
-   record: the current commit, the files with changes and the untracked files git does not
-   ignore, and their content hashes.
+   record, with `-z` so that no path comes back quoted: the current commit, the files with
+   changes and the untracked files git does not ignore, and their content hashes.
 2. If the current commit differs from the recorded one, note that the commit moved and list
-   the files changed between the two commits (`git diff --name-only <before> <after>`; when
-   there was no commit before, every file in the new commit, `git ls-tree -r --name-only HEAD`).
+   the files changed between the two commits (`git diff --name-only -z <before> <after>`; when
+   there was no commit before, every file in the new commit, `git ls-tree -r --name-only -z HEAD`).
+   Here too, `-z` keeps the paths unquoted.
 3. Compare the union of: files with changes before, files with changes after, untracked files
    before and after, and the files changed between the commits. Collecting this union catches a
    file that had changes before the run and was put back to its committed content during it.

@@ -81,8 +81,9 @@ Then, in this order:
    command name to a different installation than the one outside it. v1 is refused rather than
    tried, because its flags mean different things and it has no `--standalone`.
 2. **Record the repository's state**, when the working directory is under git. Find the root of
-   the repository that contains it (`git rev-parse --show-toplevel`) and record, for that whole
-   repository:
+   the repository that contains it (`git rev-parse --show-toplevel`, run in the working
+   directory). Run every other git command in this skill at that root, because the paths git
+   reports are relative to it. Record, for the whole repository:
    - the current commit (`git rev-parse HEAD`; record "none" before the first commit);
    - every file with changes and every untracked file git does not ignore
      (`git status --porcelain --untracked-files=all --no-renames`, which lists untracked files
@@ -148,8 +149,9 @@ After the run ends — exit code 0, any other exit code, or timed out — build 
 comparing the repository with the pre-run record. Skip this when nothing was recorded; the
 result then says changes could not be detected.
 
-1. Read the repository's state again, the same way as the pre-run record: the current commit,
-   the files with changes and the untracked files git does not ignore, and their content hashes.
+1. Read the repository's state again, at the repository root and the same way as the pre-run
+   record: the current commit, the files with changes and the untracked files git does not
+   ignore, and their content hashes.
 2. If the current commit differs from the recorded one, note that the commit moved and list
    the files changed between the two commits (`git diff --name-only <before> <after>`; when
    there was no commit before, every file in the new commit, `git ls-tree -r --name-only HEAD`).

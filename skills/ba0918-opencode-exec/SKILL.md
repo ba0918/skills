@@ -152,9 +152,11 @@ list as below, and mark the result as timed out.
 
 Some pre-commands start opencode so that it is not a descendant of the process you started —
 for example by asking a separate service to start it — and stopping the descendants does not
-stop it. When, after stopping, you cannot confirm that no descendant remains, do not report the
-run as stopped: together with the timeout, say that opencode may still be running and may keep
-writing after the change list was built.
+stop it. An opencode outside the descendants cannot be seen from here. So on a timeout, when a
+pre-command was passed, or when, after stopping, you cannot confirm that no descendant remains,
+do not report the run as stopped: together with the timeout, say that opencode may still be
+running and may keep writing after the change list was built. Without a pre-command, opencode
+is the process you started, so you can confirm that it stopped.
 
 ## Change list
 
@@ -197,8 +199,9 @@ Rules for the change list:
 Report these five things, without summarizing the output or judging whether the task went well:
 
 1. **Exit code.** On a timeout, say that the run timed out instead of reporting it as a normal
-   exit. When it could not be confirmed that no descendant remained after stopping, also say
-   that opencode may still be running and may keep writing after the change list was built.
+   exit. When a pre-command was passed, or when it could not be confirmed that no descendant
+   remained after stopping, also say that opencode may still be running and may keep writing
+   after the change list was built.
 2. **The stdout file's path.**
 3. **The stderr file's path.**
 4. **The change list**, stated as the changes in the repository's git-visible files between the

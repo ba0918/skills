@@ -121,7 +121,10 @@ Run this, in the working directory:
   and newlines must reach opencode unchanged. Start the process with an argument list where the
   environment allows it. When the only way to start it is through a shell, put the contents into
   a variable first and pass that variable, double-quoted, as the argument — never paste the
-  contents into the command text.
+  contents into the command text. The usual ways of reading a file into a shell variable drop
+  its trailing newlines, so read it in a way that keeps every byte: for example, append one
+  marker character right after the file's contents as part of the same read, then remove only
+  that marker from the end of the variable.
 - **Not `--file`.** The prompt is not attached as a file. The prompt file stays where the caller
   put it, as the record of what was asked.
 - **Too long to start.** If the process cannot start because the prompt is too long, report

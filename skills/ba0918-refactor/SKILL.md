@@ -44,8 +44,8 @@ not make those changes; list them in the report instead.
 - Do not change code whose reason for being written that way you cannot state.
 - Do not apply a transformation to a site that no runnable check covers.
 - Do not fix a bug you find. Report it with a proposed issue; do not file it.
-- Do not edit a test's assertions to make it pass. A test that needs a new assertion is
-  evidence of a behavior change: revert the transformation.
+- Do not edit a test's assertions to make it pass. A test whose assertion would have to change
+  is evidence of a behavior change: revert the transformation.
 - Apply one improvement at a time and run the checks before the next one.
 - Do not delete code that looks unused. Report it.
 - Finishing with no change is a valid result when the code is already clear.

@@ -32,6 +32,7 @@ gh skill install ba0918/skills ba0918-handoff --agent <エージェント名> --
 | スキル | 何をするか |
 |---|---|
 | [ba0918-handoff](skills/ba0918-handoff) | 作業中の文脈を `.agents/HANDOFF.md` に保存し、次のセッションで読み込んで続きから始める |
+| [ba0918-refactor](skills/ba0918-refactor) | 指定した範囲の既存コードを、挙動を変えずに読みやすく整える。見つけたバグは直さず報告し、似たコードへの展開は同意を得てから行う |
 | [ba0918-teacher](skills/ba0918-teacher) | 実作業でユーザーがコードを書き、レビューするのを、段階的なヒントと学習記録で支える |
 
 `ba0918-handoff` を入れたら、`.gitignore` に `/.agents/HANDOFF.md` を 1 行足しておいてください。引き継ぎファイルは作業中の状態を書き出したもので、コミットする対象ではありません。足し忘れても保存時にスキルが同じ行を提案します。

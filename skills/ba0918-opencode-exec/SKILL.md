@@ -91,9 +91,9 @@ Then, in this order:
      that was deleted.
 
    Write this record to a file in the output location, named per run like the output files
-   below. Keep it out of the conversation: the caller only needs its path. When the working
-   directory is not under git, or git cannot be found, record nothing; the change list will
-   then be reported as not detectable.
+   below, with `.before` as the ending. Keep its contents out of the conversation. When the
+   working directory is not under git, or git cannot be found, record nothing; the change list
+   will then be reported as not detectable.
 
 ## Command
 
@@ -127,3 +127,98 @@ Run this, in the working directory:
   existing file: if the name is taken, pick another random part.
 - **Default output format.** Keep opencode's default output in the stdout file. Do not add
   `--format json`.
+
+## Running and waiting
+
+Start the command in a way that lets this session wait for it to finish, and wait until it
+exits. A run can take tens of minutes. Do not stop it or start it again to check on its
+progress; the stdout and stderr files are there to read after it ends.
+
+Only when a time limit was passed: note the process id of the command at start. Once the limit
+passes, stop that process and every process descended from it — first ask them to terminate,
+then force any that remain after a short grace period. Stopping only the outermost process is
+not enough: when a pre-command wraps opencode, opencode inside it would keep writing. Find the
+processes by their descent from the one you started, never by name, and stop no other process:
+another opencode run may be working at the same time. After they have stopped, build the change
+list as below, and mark the result as timed out.
+
+## Change list
+
+After the run ends — exit code 0, any other exit code, or timed out — build the change list by
+comparing the repository with the pre-run record. Skip this when nothing was recorded; the
+result then says changes could not be detected.
+
+1. Read the repository's state again, the same way as the pre-run record: the current commit,
+   the files with changes and the untracked files git does not ignore, and their content hashes.
+2. If the current commit differs from the recorded one, note that the commit moved and list
+   the files changed between the two commits (`git diff --name-only <before> <after>`; when
+   there was no commit before, every file in the new commit, `git ls-tree -r --name-only HEAD`).
+3. Compare the union of: files with changes before, files with changes after, untracked files
+   before and after, and the files changed between the commits. Collecting this union catches a
+   file that had changes before the run and was put back to its committed content during it.
+4. For each file in the union, take its content hash before — from the pre-run record, or, for
+   a file the record does not list, the hash of that file in the recorded commit
+   (`git rev-parse <before>:<path>`), or "absent" when it is not there — and its content hash
+   now (`git hash-object <path>`, or "absent" when the file is gone). The file is added,
+   modified, or deleted when the two differ.
+5. The change list is the files from step 4 whose hashes differ, together with the files
+   changed between the commits from step 2.
+
+Rules for the change list:
+
+- It covers the whole repository that contains the working directory, not only the working
+  directory. Files git ignores are not covered, and the result says so.
+- It compares the state before and after only. A file with changes before the run is listed
+  when its content changed again. A file that changed during the run and returned to its earlier
+  content is not listed.
+- It does not tell who made a change: opencode, the caller, or anything else running at the same
+  time. A caller that needs to tell them apart gives the run its own directory.
+- Nothing in it is reverted. The caller or the person decides what to do with each change.
+
+## Result
+
+Report these five things, without summarizing the output or judging whether the task went well:
+
+1. **Exit code.** On a timeout, say that the run timed out instead of reporting it as a normal
+   exit.
+2. **The stdout file's path.**
+3. **The stderr file's path.**
+4. **The change list**, stated as the changes in the repository's git-visible files between the
+   start and the end of the run, not attributed to anyone, and excluding files git ignores. When
+   the working directory is not under git, or git cannot be found, say that changes could not
+   be detected instead.
+5. **The `--auto` note:** every permission the opencode configuration does not deny was granted
+   automatically.
+
+A failure of the pre-command and a failure of opencode are not told apart. Both show up as the
+exit code and in the stderr file.
+
+When the run was passed no-change, put one of these before everything else in the result:
+
+- the change list is not empty: say that changes occurred, and list them;
+- changes could not be detected: say so, because the run cannot be confirmed to have left the
+  directory unchanged.
+
+## Output files
+
+The stdout file, the stderr file, and the pre-run record stay in the output location. The skill
+never deletes them, and never deletes the prompt file either. Removing them is up to the caller
+or the person, whenever they choose.
+
+## Judgment
+
+**Why the environment is the caller's.** opencode by itself cannot be made read-only from the
+command line, so the skill has no way to enforce it. The caller can: with an opencode agent whose
+permissions deny writing, or with a pre-command that starts a sandbox where the working directory
+is read-only. Keeping that choice with the caller lets the same skill serve investigation,
+review, and writing tasks.
+
+**Why the change list is reported, not enforced.** A no-change run that changed files is a fact
+the caller must see first, but only the caller knows whether a change was harmless. Reverting it
+automatically could destroy work the person wanted, so the skill reports and stops there.
+
+**Why the output lives outside the repository.** Output files inside it would show up in the
+change list themselves and leave the repository dirty.
+
+**Why the output format is the default.** The caller reads the output and judges it; opencode's
+default output is readable as it is, and a structured format adds nothing the skill uses.

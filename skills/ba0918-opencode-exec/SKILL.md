@@ -164,7 +164,8 @@ result then says changes could not be detected.
    now (`git hash-object <path>`, or "absent" when the file is gone). The file is added,
    modified, or deleted when the two differ.
 5. The change list is the files from step 4 whose hashes differ, together with the files
-   changed between the commits from step 2.
+   changed between the commits from step 2. When the commit moved, the change list also states
+   that fact, with the commits before and after.
 
 Rules for the change list:
 
@@ -187,8 +188,9 @@ Report these five things, without summarizing the output or judging whether the 
 3. **The stderr file's path.**
 4. **The change list**, stated as the changes in the repository's git-visible files between the
    start and the end of the run, not attributed to anyone, and excluding files git ignores. When
-   the working directory is not under git, or git cannot be found, say that changes could not
-   be detected instead.
+   the commit moved during the run, say so, with the commits before and after, together with the
+   files changed between them. When the working directory is not under git, or git cannot be
+   found, say that changes could not be detected instead.
 5. **The `--auto` note:** every permission the opencode configuration does not deny was granted
    automatically.
 

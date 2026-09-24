@@ -36,3 +36,94 @@ coming up in conversation ("how do I use opencode?") does not start a run.
 A run sends the contents of the working directory and the prompt to the provider of the chosen
 model. Being named counts as the decision to send them: do not ask for confirmation again before
 running.
+
+## Inputs
+
+| Input | Required | Default when not given |
+|---|---|---|
+| Prompt file — a self-contained task instruction | yes | — |
+| Model — `provider/model` or `provider/model#variant` | yes | — |
+| Working directory — where opencode runs, such as a prepared worktree | no | the current working directory |
+| Agent name — an agent defined in the opencode configuration, used to apply its permission settings | no | none; `--agent` is omitted |
+| Pre-command — a command placed in front of opencode, such as one that starts a sandbox; received as a list of words (an argument list) | no | none |
+| Command name — the name opencode v2 is installed under | no | `opencode` |
+| No-change — this run must not change the working directory | no | not set |
+| Time limit | no | none; wait however long the run takes |
+| Output location — where the stdout, stderr, and pre-run record files go | no | a new temporary directory, outside any repository |
+
+Do not choose a model, a pre-command, or anything else the caller did not pass. The only values
+the skill supplies are the defaults in this table.
+
+## Before running
+
+Stop without running, and tell the caller what is missing or wrong, when any of these holds:
+
+- The prompt file or the model was not passed.
+- The prompt file does not exist, is empty, or cannot be read.
+- The working directory does not exist.
+- The output location is inside the repository that contains the working directory — or, when
+  the working directory is not under git, inside the working directory itself. Compare resolved
+  absolute paths. Never move the output somewhere else silently: the caller would then look for
+  the files in the wrong place. When the output location is outside and does not exist yet,
+  create it.
+- The prompt file's contents begin with `-`. opencode could read the prompt as a flag.
+- The version check below finds no command, or a major version other than 2.
+
+Do not check how the model is written. If it is wrong, opencode reports an error, and that
+error is the result.
+
+Then, in this order:
+
+1. **Check the version inside the pre-command.** Run the pre-command followed by
+   `<command name> --version`, in the working directory. If the command is not found, stop and
+   say so. If the major version is not 2, stop and report that opencode v2 is required and which
+   version was found. The check runs inside the pre-command because a sandbox may resolve the
+   command name to a different installation than the one outside it. v1 is refused rather than
+   tried, because its flags mean different things and it has no `--standalone`.
+2. **Record the repository's state**, when the working directory is under git. Find the root of
+   the repository that contains it (`git rev-parse --show-toplevel`) and record, for that whole
+   repository:
+   - the current commit (`git rev-parse HEAD`; record "none" before the first commit);
+   - every file with changes and every untracked file git does not ignore
+     (`git status --porcelain --untracked-files=all --no-renames`, which lists untracked files
+     one by one instead of collapsing a directory into one line, and a rename as its two paths);
+   - the content hash of each of those files (`git hash-object <path>`), or "absent" for a file
+     that was deleted.
+
+   Write this record to a file in the output location, named per run like the output files
+   below. Keep it out of the conversation: the caller only needs its path. When the working
+   directory is not under git, or git cannot be found, record nothing; the change list will
+   then be reported as not detectable.
+
+## Command
+
+Run this, in the working directory:
+
+```
+[pre-command] <command name> run --standalone --auto --model <model> [--agent <agent name>] <prompt file contents>
+```
+
+- **Pre-command.** Place the words the caller passed in front, in the same order, each one
+  unchanged. Do not interpret them. When the caller passed the pre-command as one string, place
+  that string as one single word: do not split it on spaces and do not let a shell interpret it.
+- **`--standalone`, always.** Without it opencode hands the work to its background service,
+  which runs outside any sandbox the pre-command set up.
+- **`--auto`, always.** Without it the run may stop at a permission prompt that no one sees.
+  `--auto` grants every permission the opencode configuration does not explicitly deny, which is
+  why every result says so.
+- **The prompt is one argument.** Read the prompt file and pass its whole contents as a single
+  message argument, exactly as read. No shell may expand or split it: quotes, `$`, backticks,
+  and newlines must reach opencode unchanged. Start the process with an argument list where the
+  environment allows it. When the only way to start it is through a shell, put the contents into
+  a variable first and pass that variable, double-quoted, as the argument — never paste the
+  contents into the command text.
+- **Not `--file`.** The prompt is not attached as a file. The prompt file stays where the caller
+  put it, as the record of what was asked.
+- **Too long to start.** If the process cannot start because the prompt is too long, report
+  that. Do not switch to another way of passing it.
+- **Output files.** Write stdout and stderr to two files in the output location, named uniquely
+  per run with the date and time and a random part — for example
+  `opencode-20260924T101500Z-k3f9.stdout` and the same name with `.stderr`. Never overwrite an
+  existing file: if the name is taken, pick another random part.
+- **Default output format.** Keep opencode's default output in the stdout file. Do not add
+  `--format json`.

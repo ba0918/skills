@@ -150,6 +150,12 @@ processes by their descent from the one you started, never by name, and stop no 
 another opencode run may be working at the same time. After they have stopped, build the change
 list as below, and mark the result as timed out.
 
+Some pre-commands start opencode so that it is not a descendant of the process you started —
+for example by asking a separate service to start it — and stopping the descendants does not
+stop it. When, after stopping, you cannot confirm that no descendant remains, do not report the
+run as stopped: together with the timeout, say that opencode may still be running and may keep
+writing after the change list was built.
+
 ## Change list
 
 After the run ends — exit code 0, any other exit code, or timed out — build the change list by
@@ -191,7 +197,8 @@ Rules for the change list:
 Report these five things, without summarizing the output or judging whether the task went well:
 
 1. **Exit code.** On a timeout, say that the run timed out instead of reporting it as a normal
-   exit.
+   exit. When it could not be confirmed that no descendant remained after stopping, also say
+   that opencode may still be running and may keep writing after the change list was built.
 2. **The stdout file's path.**
 3. **The stderr file's path.**
 4. **The change list**, stated as the changes in the repository's git-visible files between the

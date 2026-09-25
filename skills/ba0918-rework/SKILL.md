@@ -61,3 +61,23 @@ these cases:
   wrong"). That is the job of a review or an investigation; answer without changing files or
   creating a branch.
 - You noticed problematic code while doing other work. Point it out and stop.
+
+## Procedure
+
+### 2. Diagnose (read only)
+
+Look at the scope under each perspective the person asked for — all six by default. Before
+looking under a perspective, read its guide; when the perspectives are narrowed, read only the
+guides for the ones being looked at:
+
+| Perspective | Guide |
+|---|---|
+| Bugs | `references/bugs.md` |
+| Design problems (mixed responsibilities, dependencies pointing the wrong way) | `references/design.md` |
+| Performance problems (N+1 queries and similar) | `references/performance.md` |
+| Memory leaks | `references/memory-leaks.md` |
+| Security problems | `references/security.md` |
+| Mismatches with the specification | `references/spec-mismatch.md` |
+
+Each guide lists typical signs of the problem and the typical ways a fix leaks a behavior
+change beyond what was declared.

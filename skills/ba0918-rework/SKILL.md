@@ -46,9 +46,11 @@ up-front confirmation, two safety nets remain:
   that could break something; an internal bug fix is not a contract change.
 - **Ask item**: an item the person is asked about — a contract change, or an item whose correct
   behavior cannot be decided from evidence inside the repository. Nothing else is asked.
-- **Spec test**: a test that states how the changed behavior should be, written from evidence
-  (the specification, the callers, the history), and seen failing before the fix. It is
-  committed.
+- **Spec test**: a test that states how a behavior should be, written from evidence (the
+  specification, the callers, the history). One written for a behavior the item changes is
+  seen failing before the fix. A scaffold test promoted because it agrees with the evidence is
+  also a spec test; it pins a behavior that does not change, so it has no failing run. Spec
+  tests are committed.
 - **Scaffold test**: a test that temporarily pins current behavior where no test protects the
   behavior that must not change, to catch an undeclared change during a fix. It is not
   committed, unless it is promoted to a spec test.
@@ -250,7 +252,9 @@ on them.
 For each item that is not an ask item, in order:
 
 1. Declare what will change. If nothing observable changes, declare that nothing changes.
-2. Write the spec test and see it fail. Where needed, write scaffold tests (see Rules).
+2. If the item changes behavior, write the spec test and see it fail. An item declared to
+   change nothing — a design, performance, or memory fix — gets no failing spec test. Where
+   needed, write scaffold tests (see Rules).
 3. Make the fix.
 4. Run the tests that cover the files this item changed, and the project's checks such as a
    type check or a build. If you cannot narrow the tests to those files, run the full suite.

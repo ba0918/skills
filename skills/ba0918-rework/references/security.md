@@ -18,7 +18,8 @@ allows: read or change data they should not, run code, or exhaust a resource.
 - Unbounded input size, recursion depth, or retry counts that let one request exhaust memory
   or time.
 - Handling of stored data that can lose or corrupt it when attacked. Mark such an item as data
-  destruction; it is fixed first.
+  destruction; it comes first in the fix order in `SKILL.md`, after any base item it depends
+  on. If it is an ask item, it still waits with the other ask items.
 
 ## Pitfalls when fixing
 

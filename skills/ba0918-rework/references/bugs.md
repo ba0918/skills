@@ -21,7 +21,8 @@ its own name say it should do.
   provides.
 - Anything that can lose or corrupt stored data: a partial write without a transaction, an
   overwrite without a check, a migration that drops a column still read elsewhere. Mark such
-  an item as data destruction; it is fixed first.
+  an item as data destruction; it comes first in the fix order in `SKILL.md`, after any base
+  item it depends on. If it is an ask item, it still waits with the other ask items.
 
 ## Pitfalls when fixing
 

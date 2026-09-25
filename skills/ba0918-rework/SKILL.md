@@ -141,7 +141,22 @@ these cases:
 
 ## Procedure
 
+### 1. Fix the scope
+
+Resolve the scope the person named. "The last N commits" expands to the files those commits
+changed. If the scope cannot be resolved, change nothing and return the reason (see Inputs).
+
+Tests inside the scope are the means of checking fixes, not diagnosis targets of their own;
+a test that contradicts the specification is still recorded as a mismatch.
+
+If the original working tree has uncommitted changes, do not ask about them and do not touch
+them. They are outside the diagnosis: read the files in scope as committed at `HEAD` (for
+example `git show HEAD:<path>`), and say in the report that the uncommitted changes were not
+diagnosed.
+
 ### 2. Diagnose (read only)
+
+Diagnosis only reads. It creates no branch and changes no file.
 
 Look at the scope under each perspective the person asked for — all six by default. Before
 looking under a perspective, read its guide; when the perspectives are narrowed, read only the
@@ -158,6 +173,111 @@ guides for the ones being looked at:
 
 Each guide lists typical signs of the problem and the typical ways a fix leaks a behavior
 change beyond what was declared.
+
+When the scope is large, this read-only diagnosis may be handed to an agent in a separate
+context; the findings come back to this session, which does all the editing. If, before
+finishing the files in scope, you judge that you can no longer retain what you have read, stop
+and propose a split with that reason (see Inputs).
+
+For each item, record its perspective, its location, the evidence, whether it is an ask item,
+and whether it is data destruction — an item that, left unfixed, loses or corrupts stored
+data. Data destruction is an attribute any item can carry, not a perspective.
+
+When you find the same problem outside the scope, do not fix it. Record its location for the
+report, as a proposed issue. Fixing it would make the diff larger than the person expected to
+review; they can call this skill again with that scope.
+
+If there is nothing to fix, skip to the report: no branch or worktree is created.
+
+### 3. Create the branch and the worktree
+
+Only now, with at least one item to fix, create a new branch `rework/<timestamp>` in a new
+worktree made from `HEAD`. Place the worktree next to the repository, in the same parent
+directory, named `<repository name>-rework-<timestamp>`. Use one timestamp for both names, in
+a form valid in a branch name, such as `20260925-143012`:
+
+```
+git worktree add -b rework/20260925-143012 ../myrepo-rework-20260925-143012 HEAD
+```
+
+Do not place the worktree in a temporary directory: it is left in place for the person after
+the run, and a temporary directory may be cleaned away.
+
+Do all further work inside the new worktree. Never touch the original working tree, during the
+run or after it: do not switch its branch, do not stash its changes, do not commit to its
+branch.
+
+Do not merge or push the branch, and do not remove the worktree. The run ends with the branch
+name and the worktree location in the report.
+
+### 4. Install and take the baseline
+
+A new worktree has no installed dependencies and no build output. Run the project's install
+steps there, then run the project's full test suite once. This run is the baseline: record the
+command, the output, and the pass and fail counts, and note every test that already fails.
+Tests failing at the baseline are not a reason to hold an item.
+
+A **new failure**, from here on, means a test that passed at the baseline and now fails.
+
+If the full test suite still cannot be run after installing, fix nothing. Report the reason
+and stop, leaving the empty branch and the worktree in place.
+
+### 5. Order the items
+
+If one item's fix rewrites the code another item's fix would change, the first is the base:
+fix it first. Otherwise, fix in order of importance:
+
+1. data destruction and security problems;
+2. bugs;
+3. mismatches with the specification;
+4. performance problems and memory leaks;
+5. design problems.
+
+Ask items are not fixed in this pass; they wait for step 7, along with the items that depend
+on them.
+
+### 6. Fix the other items one at a time
+
+For each item that is not an ask item, in order:
+
+1. Declare what will change. If nothing observable changes, declare that nothing changes.
+2. Write the spec test and see it fail. Where needed, write scaffold tests (see Rules).
+3. Make the fix.
+4. Run the tests that cover the files this item changed, and the project's checks such as a
+   type check or a build. If you cannot narrow the tests to those files, run the full suite.
+5. If they pass, commit this item alone as one commit. Follow the project's commit message
+   conventions. Delete the scaffold tests that were not promoted.
+6. If there is a new failure outside the declared change, revert this item's changes, hold the
+   item, and record which test failed and why. Move on to the next item.
+
+After each item, re-check whether the remaining items still hold. An item that another fix
+removed is recorded as resolved by that fix, not fixed again.
+
+**Deletion.** Unused code may be deleted when you have confirmed it cannot be reached: a
+search for its references finds none; nothing reaches it dynamically (a name built from a
+string, reflection, configuration, a plugin registry); and it is not a public API. Removing a
+public API is a contract change and an ask item. Code you cannot fully confirm is not deleted;
+report it, as a proposed issue. Record what you checked for each deletion; that record is the
+deletion's verification.
+
+### 7. Ask the ask items together, then fix them
+
+When every other item is done, ask the ask items that advance permission does not cover, all
+at once (see Rules). Fix the answered items with the same steps as step 6, base items before
+the items that depend on them. In a run where no one can answer, fix none of them and carry
+them to the report.
+
+### 8. Run the full suite again
+
+Run the full test suite once more in the worktree. If there is a new failure:
+
+1. Find the commit that caused it by bisecting this branch's commits, from the commit the
+   branch started at (good) to the branch tip (bad), with `git bisect`.
+2. Revert that commit together with the later commits that depend on it (those that rewrite
+   code it changed), newest first, with `git revert`. Hold every item whose commit was reverted.
+3. Run the full suite again. If a new failure remains, repeat from 1.
+
+The original commits and their reverts both stay in the history.
 
 ## Judgment
 
@@ -187,6 +307,14 @@ item is done.
 tests as the code it replaced. Without numbers from before and after, "faster" or "no longer
 leaks" is a claim with nothing behind it.
 
+**A separate worktree removes the need to ask about the working tree.** The person's
+uncommitted work and current branch stay exactly as they were, so there is nothing to confirm
+before starting, and the fixes never mix with work in progress.
+
+**The scope is the diff the person agreed to read.** The same problem elsewhere may sit in a
+different context, and fixing it would grow the diff past what was expected, so it is reported
+instead.
+
 **An expected value that must change outside the declaration is a finding.** It means the fix
 changed something it did not say it would. Editing the expectation to pass would hide exactly
 the change the declaration exists to expose.
@@ -209,4 +337,15 @@ A test after a fix:
 ```
 Bad:  write the test against the fixed code and commit it as the specification.
 Good: write the test from the callers' expectations, see it fail, then fix.
+```
+
+Deletion and the scope:
+
+```
+Good: delete a private function with no references, no dynamic lookup, no configuration entry;
+      report the three checks.
+Bad:  delete a function because a search finds no references, when handlers are looked up by a
+      name built from a string.
+Bad:  the same injection flaw exists in a file outside the scope; fix it there too.
+Good: report its location as a proposed issue and leave it unchanged.
 ```

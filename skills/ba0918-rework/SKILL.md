@@ -146,9 +146,6 @@ these cases:
 Resolve the scope the person named. "The last N commits" expands to the files those commits
 changed. If the scope cannot be resolved, change nothing and return the reason (see Inputs).
 
-Tests inside the scope are the means of checking fixes, not diagnosis targets of their own;
-a test that contradicts the specification is still recorded as a mismatch.
-
 If the original working tree has uncommitted changes, do not ask about them and do not touch
 them. They are outside the diagnosis: read the files in scope as committed at `HEAD` (for
 example `git show HEAD:<path>`), and say in the report that the uncommitted changes were not
@@ -247,8 +244,8 @@ For each item that is not an ask item, in order:
    type check or a build. If you cannot narrow the tests to those files, run the full suite.
 5. If they pass, commit this item alone as one commit. Follow the project's commit message
    conventions. Delete the scaffold tests that were not promoted.
-6. If there is a new failure outside the declared change, revert this item's changes, hold the
-   item, and record which test failed and why. Move on to the next item.
+6. If there is a new failure outside the declared change, revert this item's changes and
+   delete its scaffold tests, hold the item, and record which test failed and why. Move on to the next item.
 
 After each item, re-check whether the remaining items still hold. An item that another fix
 removed is recorded as resolved by that fix, not fixed again.

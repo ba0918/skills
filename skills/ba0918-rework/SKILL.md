@@ -66,14 +66,7 @@ up-front confirmation, two safety nets remain:
 If the scope cannot be resolved — a path does not exist, a symbol cannot be found — change
 nothing and return the reason.
 
-If the scope is too large to hold in mind at once, propose a split and stop. Stopping partway
-through a scope leaves it unclear what was fixed and what was not. Draw no fixed line such as a
-line count: while diagnosing, if you judge before finishing the files in scope that you can no
-longer retain what you have read, stop and write that reason into the split proposal. There is
-no upper limit on the number of items fixed.
-
-When the scope is large, the read-only diagnosis may be handed to an agent running in a
-separate context. Editing files always stays with the session that was invoked.
+If the scope is too large to hold in mind at once, propose a split and stop (see step 2).
 
 ## When edits may run
 
@@ -181,10 +174,16 @@ guides for the ones being looked at:
 Each guide lists typical signs of the problem and the typical ways a fix leaks a behavior
 change beyond what was declared.
 
-When the scope is large, this read-only diagnosis may be handed to an agent in a separate
-context; the findings come back to this session, which does all the editing. If, before
-finishing the files in scope, you judge that you can no longer retain what you have read, stop
-and propose a split with that reason (see Inputs).
+If the scope is too large to hold in mind at once, propose a split and stop. Stopping partway
+through a scope leaves it unclear what was fixed and what was not. Draw no fixed line such as a
+line count: while diagnosing, if you judge before finishing the files in scope that you can no
+longer retain what you have read, stop and write that reason into the split proposal. There is
+no upper limit on the number of items fixed.
+
+When the scope is large, this diagnosis may be handed to an agent in a separate context. That
+agent only reads and returns its findings; it may also report that the scope is too large,
+which leads to the split proposal above. Editing files always stays with the session that was
+invoked.
 
 For each item, record its perspective, its location, the evidence, whether it is an ask item,
 and whether it is data destruction — an item that, left unfixed, loses or corrupts stored

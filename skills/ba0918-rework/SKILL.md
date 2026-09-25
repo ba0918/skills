@@ -261,12 +261,14 @@ For each item that is not an ask item, in order:
    type check or a build. If you cannot narrow the tests to those files, run the full suite.
    For an item measured or captured in 3, take the same measurement or capture again and
    compare.
-6. If they pass, first delete the scaffold tests that were not promoted and any temporary
-   measurement code, so that neither is ever committed. Then commit this item alone as one
-   commit. Follow the project's commit message conventions.
-7. If there is a new failure outside the declared change, discard this item's uncommitted
+6. If they pass and, for an item measured or captured in 3, the comparison shows the
+   improvement or only the declared visual change, first delete the scaffold tests that were
+   not promoted and any temporary measurement code, so that neither is ever committed. Then
+   commit this item alone as one commit. Follow the project's commit message conventions.
+7. If there is a new failure outside the declared change, or the comparison shows no
+   improvement or a visual change beyond the declared one, discard this item's uncommitted
    changes, delete its scaffold tests and any temporary measurement code, hold the item, and
-   record which test failed and why. Move on to the next item.
+   record which test failed and why, or what the comparison showed. Move on to the next item.
 
 After each item, re-check whether the remaining items still hold. An item that another fix
 removed is recorded as resolved by that fix, not fixed again.

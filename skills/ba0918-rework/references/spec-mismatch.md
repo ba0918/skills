@@ -2,16 +2,7 @@
 
 A mismatch is a place where the code and the specification disagree.
 
-The specification is what is written inside the repository:
-
-- specification documents;
-- the README;
-- API documentation;
-- promises written in docstrings or in types;
-- test names.
-
-Nothing outside the repository counts, and neither does what the code "obviously should" do
-without a written source.
+What counts as the specification is defined under Terms in `SKILL.md`.
 
 ## How to find them
 

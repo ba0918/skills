@@ -34,6 +34,10 @@ up-front confirmation, two safety nets remain:
 
 ### Terms
 
+- **Specification**: what is written inside the repository — specification documents, the
+  README, API documentation, promises written in docstrings or in types, and test names.
+  Nothing outside the repository counts, and neither does what the code "obviously should" do
+  without a written source.
 - **Contract change**: a fix that changes an interface, the appearance of a user interface, or
   the design of stored data. It includes changing the shape of a public API, removing a public
   API, and rejecting input that the specification used to accept. It does not mean every change
@@ -84,8 +88,8 @@ these cases:
 - Ask the person only about ask items: (1) contract changes, and (2) items whose correct
   behavior cannot be decided from evidence inside the repository.
 - Fix every other behavior change without asking, and state the evidence. Evidence is the
-  specification (as defined in `references/spec-mismatch.md`), what the callers expect, the
-  tests, and the history of the change.
+  specification (see Terms), what the callers expect, the tests, and the history of the
+  change.
 - When the code and the specification disagree, decide which is right if the evidence settles
   it. An item becomes kind (2) only when the sources of evidence contradict each other and
   nothing says which one takes precedence. When the code is decided to be right, fix the

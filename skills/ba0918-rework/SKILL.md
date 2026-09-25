@@ -242,8 +242,9 @@ For each item that is not an ask item, in order:
 3. Make the fix.
 4. Run the tests that cover the files this item changed, and the project's checks such as a
    type check or a build. If you cannot narrow the tests to those files, run the full suite.
-5. If they pass, commit this item alone as one commit. Follow the project's commit message
-   conventions. Delete the scaffold tests that were not promoted.
+5. If they pass, first delete the scaffold tests that were not promoted and any temporary
+   measurement code, so that neither is ever committed. Then commit this item alone as one
+   commit. Follow the project's commit message conventions.
 6. If there is a new failure outside the declared change, revert this item's changes and
    delete its scaffold tests, hold the item, and record which test failed and why. Move on to the next item.
 

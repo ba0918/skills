@@ -361,10 +361,12 @@ about. A wrong result that its own callers never wanted is not a contract; fixin
 point of this skill.
 
 **A test written after the code only records the code.** It pins what the code does now, right
-or wrong, so keeping it would present the current behavior as the specification. A spec test is
-written from evidence before the fix and fails first; that failure is what shows it tests the
-change. Scaffold tests exist only to catch undeclared changes during a fix, so they go when the
-item is done.
+or wrong, so keeping it would present the current behavior as the specification. A spec test
+for a changed behavior is written from evidence before the fix and fails first; that failure is
+what shows it tests the change. Scaffold tests exist only to catch undeclared changes during a
+fix, so they go when the item is done. The exception is a scaffold test that agrees with the
+evidence of the specification: the evidence, not the code alone, backs what it pins, so it is
+kept as a spec test. It pins a behavior that does not change, so it has no failing run.
 
 **Results that do not change need a measurement.** A performance or memory fix passes the same
 tests as the code it replaced. Without numbers from before and after, "faster" or "no longer
@@ -433,4 +435,4 @@ What is left behind, and what is not:
 - The branch and the worktree stay until the person removes them. This skill never deletes
   them.
 - Scaffold tests and temporary measurement code live only in the worktree while their item is
-  in progress. They are never committed.
+  in progress. They are never committed, except a scaffold test promoted to a spec test.

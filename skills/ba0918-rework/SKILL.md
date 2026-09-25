@@ -255,13 +255,17 @@ For each item that is not an ask item, in order:
 2. If the item changes behavior, write the spec test and see it fail. An item declared to
    change nothing — a design, performance, or memory fix — gets no failing spec test. Where
    needed, write scaffold tests (see Rules).
-3. Make the fix.
-4. Run the tests that cover the files this item changed, and the project's checks such as a
+3. For a performance or memory item, take the measurement before the fix; for a user
+   interface item, capture the screen before the fix (see Items that need measurement).
+4. Make the fix.
+5. Run the tests that cover the files this item changed, and the project's checks such as a
    type check or a build. If you cannot narrow the tests to those files, run the full suite.
-5. If they pass, first delete the scaffold tests that were not promoted and any temporary
+   For an item measured or captured in 3, take the same measurement or capture again and
+   compare.
+6. If they pass, first delete the scaffold tests that were not promoted and any temporary
    measurement code, so that neither is ever committed. Then commit this item alone as one
    commit. Follow the project's commit message conventions.
-6. If there is a new failure outside the declared change, revert this item's changes and
+7. If there is a new failure outside the declared change, revert this item's changes and
    delete its scaffold tests, hold the item, and record which test failed and why. Move on to the next item.
 
 After each item, re-check whether the remaining items still hold. An item that another fix

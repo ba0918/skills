@@ -252,8 +252,8 @@ For each item that is not an ask item, in order:
 
 1. Declare what will change. If nothing observable changes, declare that nothing changes.
 2. If the item changes behavior, write the spec test and see it fail. An item declared to
-   change nothing — a design, performance, or memory fix — gets no failing spec test. Where
-   needed, write scaffold tests (see Rules).
+   change nothing — typically a design, performance, or memory fix — gets no failing spec
+   test. Where needed, write scaffold tests (see Rules).
 3. For a performance or memory item, take the measurement before the fix; for a user
    interface item, capture the screen before the fix (see Items that need measurement).
 4. Make the fix.

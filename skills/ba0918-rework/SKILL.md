@@ -265,8 +265,8 @@ For each item that is not an ask item, in order:
    measurement code, so that neither is ever committed. Then commit this item alone as one
    commit. Follow the project's commit message conventions.
 7. If there is a new failure outside the declared change, discard this item's uncommitted
-   changes and delete its scaffold tests, hold the item, and record which test failed and why.
-   Move on to the next item.
+   changes, delete its scaffold tests and any temporary measurement code, hold the item, and
+   record which test failed and why. Move on to the next item.
 
 After each item, re-check whether the remaining items still hold. An item that another fix
 removed is recorded as resolved by that fix, not fixed again.

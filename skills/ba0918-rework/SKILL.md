@@ -141,11 +141,13 @@ these cases:
 - Performance and memory fixes leave results unchanged, so passing tests do not show they
   worked. Compare before and after: the number of queries, a timing, the trend of memory use
   over repetitions. You may build a temporary means of measurement for this; like a scaffold
-  test, it is never committed. If you cannot compare, hold the item.
+  test, it is never committed. If you cannot compare, or the comparison shows no improvement,
+  hold the item, even when the tests pass.
 - Changing how a user interface looks is a contract change, so fix it only after an answer or
   advance permission. Then capture the screen before and after and compare them, to confirm
   that the only visible change is the declared one. Show the captures in the report; do not
-  wait for the person to confirm them. If there is no way to capture the screen, hold the item.
+  wait for the person to confirm them. If there is no way to capture the screen, if the declared
+  change does not appear as declared, or if an undeclared change appears, hold the item.
 
 ## Procedure
 
@@ -268,14 +270,15 @@ For each item that is not an ask item, in order:
    type check or a build. If you cannot narrow the tests to those files, run the full suite.
    For an item measured or captured in 3, take the same measurement or capture again and
    compare.
-6. If they pass and, for an item measured or captured in 3, the comparison shows the
-   improvement or only the declared visual change, first delete the scaffold tests that were
+6. If they pass and, for an item measured or captured in 3, the comparison shows what it
+   must — for a performance or memory item, an improvement; for a user interface item, exactly
+   the declared visual change and no undeclared one — first delete the scaffold tests that were
    not promoted and any temporary measurement code, so that neither is ever committed. Then
    commit this item alone as one commit. Follow the project's commit message conventions.
 7. Otherwise — a new failure outside the declared change, or a comparison that does not show
-   exactly the declared improvement or visual change — discard this item's uncommitted
-   changes, delete its scaffold tests and any temporary measurement code, hold the item, and
-   record which test failed and why, or what the comparison showed. Move on to the next item.
+   what 6 requires — discard this item's uncommitted changes, delete its scaffold tests and
+   any temporary measurement code, hold the item, and record which test failed and why, or
+   what the comparison showed. Move on to the next item.
 
 After each item, re-check whether the remaining items still hold. An item that another fix
 removed is recorded as resolved by that fix, not fixed again.

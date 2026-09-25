@@ -19,7 +19,7 @@ What counts as the specification is defined under Terms in `SKILL.md`.
 
 When the evidence settles it — the callers' expectations, the tests, and the history of the
 change agree on one side — decide without asking. If the code is right, fix the document as
-part of the same item and say so in the report; that item is verified by comparing the
+part of the same item, even when the document is outside the scope, and say so in the report; that item is verified by comparing the
 document against the code, not by a new test. If the sources contradict each other and nothing
 says which takes precedence, the item is an ask item.
 
@@ -29,6 +29,7 @@ says which takes precedence, the item is an ask item.
   the history of both before deciding which one is stale.
 - Changing a documented public interface to match the code. That is a contract change.
 - Fixing one of several documents that repeat the same claim and leaving the rest
-  contradicting it. Find every copy inside the scope; copies outside it are reported.
+  contradicting it. When the code is right, find every copy, inside the scope or outside it,
+  and fix them in the same item.
 - Treating a test name as the specification when its assertions and the callers all agree with
   the code. The name may be the stale part.

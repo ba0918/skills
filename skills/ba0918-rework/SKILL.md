@@ -22,6 +22,8 @@ It does not cover:
 - Merging, pushing, filing issues, or deleting the worktree. The person decides these after
   reading the report.
 - Fixing anything outside the named scope, or running a flow to get agreement for doing so.
+  The one exception is a specification document outside the scope that is fixed as part of an
+  item whose code was decided to be right (see Rules).
 
 **The top priority is not to add questions to the person.** When people are asked too often,
 they approve without reading, and asking stops meaning anything. What can be decided from
@@ -93,7 +95,9 @@ these cases:
 - When the code and the specification disagree, decide which is right if the evidence settles
   it. An item becomes kind (2) only when the sources of evidence contradict each other and
   nothing says which one takes precedence. When the code is decided to be right, fix the
-  specification document as part of the same item and say so in the report.
+  specification document as part of the same item, even when that document is outside the
+  scope, and say so in the report. This is the only edit allowed outside the scope: a document
+  left wrong keeps the mismatch and lets the same problem come back.
 - A security fix that rejects input is not a contract change when that input was never valid
   under the specification (an injection string, a value outside the declared type's range). It
   is a contract change when the specification accepted that input.
@@ -187,6 +191,10 @@ data. Data destruction is an attribute any item can carry, not a perspective.
 When you find the same problem outside the scope, do not fix it. Record its location for the
 report, as a proposed issue. Fixing it would make the diff larger than the person expected to
 review; they can call this skill again with that scope.
+
+An item inside the scope that cannot be fixed without changing callers outside the scope is
+held and reported. The one edit allowed outside the scope is a specification document fixed
+as part of an item whose code was decided to be right (see Rules).
 
 If there is nothing to fix, skip to the report: no branch or worktree is created.
 

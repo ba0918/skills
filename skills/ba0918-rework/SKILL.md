@@ -32,6 +32,21 @@ up-front confirmation, two safety nets remain:
   reverting that commit.
 - The report carries the evidence behind each decision and the measured results.
 
+### Terms
+
+- **Contract change**: a fix that changes an interface, the appearance of a user interface, or
+  the design of stored data. It includes changing the shape of a public API, removing a public
+  API, and rejecting input that the specification used to accept. It does not mean every change
+  that could break something; an internal bug fix is not a contract change.
+- **Ask item**: an item the person is asked about — a contract change, or an item whose correct
+  behavior cannot be decided from evidence inside the repository. Nothing else is asked.
+- **Spec test**: a test that states how the changed behavior should be, written from evidence
+  (the specification, the callers, the history), and seen failing before the fix. It is
+  committed.
+- **Scaffold test**: a test that temporarily pins current behavior where no test protects the
+  behavior that must not change, to catch an undeclared change during a fix. It is not
+  committed, unless it is promoted to a spec test.
+
 ### Inputs
 
 | Input | Required | Meaning |
@@ -62,6 +77,68 @@ these cases:
   creating a branch.
 - You noticed problematic code while doing other work. Point it out and stop.
 
+## Rules
+
+### What to ask and what to decide
+
+- Ask the person only about ask items: (1) contract changes, and (2) items whose correct
+  behavior cannot be decided from evidence inside the repository.
+- Fix every other behavior change without asking, and state the evidence. Evidence is the
+  specification (as defined in `references/spec-mismatch.md`), what the callers expect, the
+  tests, and the history of the change.
+- When the code and the specification disagree, decide which is right if the evidence settles
+  it. An item becomes kind (2) only when the sources of evidence contradict each other and
+  nothing says which one takes precedence. When the code is decided to be right, fix the
+  specification document as part of the same item and say so in the report.
+- A security fix that rejects input is not a contract change when that input was never valid
+  under the specification (an injection string, a value outside the declared type's range). It
+  is a contract change when the specification accepted that input.
+- A design fix that changes the shape of a public API, and the removal of a public API, are
+  contract changes.
+- Ask all ask items once, together, after every other item has been fixed. Give each one what
+  would change, the evidence, and your recommendation. When the answers come, fix the items
+  right away, in the same run.
+- An item that depends on an ask item (see the fix order) waits for that answer and goes last.
+  Once answered, fix the base item, then the dependent one. If the answer is "do not fix",
+  fix the dependent item in a way that leaves the base unchanged if you can; otherwise hold
+  it.
+- Advance permission comes in two forms: per kind of contract change (interface, user interface
+  appearance, data design), or "everything as recommended". Proceed on the ask items it covers
+  as recommended, without asking. "Everything as recommended" also covers items whose correct
+  behavior the evidence could not decide.
+- In a run where no one can answer — an unattended run, or the caller says so — do not fix the
+  ask items that advance permission does not cover. Report them with your recommendation. Hold
+  the items that depend on them too, and report the dependency.
+
+### Tests
+
+- For each behavior you change, write a spec test first and see it fail before the fix. It is
+  part of that item's commit.
+- Where no existing test protects a behavior that must not change, write a scaffold test that
+  pins the current behavior, and use it only to watch for undeclared changes during the fix.
+  Do not commit it; delete it when the item is done. If a scaffold test agrees with the
+  evidence of the specification, promote it to a spec test, include it in that item's commit,
+  and say so in the report.
+- Change an existing test's expected value only where it covers the change you declared. If an
+  expected value outside the declared change would have to change, treat it as an unintended
+  change: revert the item and hold it. Updating names or import paths in tests to follow a
+  rename or a move is not a change of expected value and is allowed.
+- If a fix to code that affects behavior can be covered by neither a spec test nor a scaffold
+  test, do not fix it; hold it. This does not apply to an item that only fixes a specification
+  document, which is verified by comparing the document with the code, nor to a deletion, which
+  is verified by the checks for deletion. Report that verification.
+
+### Items that need measurement
+
+- Performance and memory fixes leave results unchanged, so passing tests do not show they
+  worked. Compare before and after: the number of queries, a timing, the trend of memory use
+  over repetitions. You may build a temporary means of measurement for this; like a scaffold
+  test, it is never committed. If you cannot compare, hold the item.
+- Changing how a user interface looks is a contract change, so fix it only after an answer or
+  advance permission. Then capture the screen before and after and compare them, to confirm
+  that the only visible change is the declared one. Show the captures in the report; do not
+  wait for the person to confirm them. If there is no way to capture the screen, hold the item.
+
 ## Procedure
 
 ### 2. Diagnose (read only)
@@ -81,3 +158,55 @@ guides for the ones being looked at:
 
 Each guide lists typical signs of the problem and the typical ways a fix leaks a behavior
 change beyond what was declared.
+
+## Judgment
+
+**Every question spends the person's attention.** When most fixes wait for approval, people
+stop reading and approve everything, and the one question that mattered gets the same glance.
+That is why only ask items are asked, and why the rest are decided from evidence and made safe
+by one commit per item and a report that shows the evidence.
+
+**Ask once, at the end.** Stopping at each ask item leaves the run half done while waiting, and
+spreads the person's attention over many interruptions. Fixing everything else first also means
+the questions arrive with the rest of the work already settled, so each answer can be acted on
+at once.
+
+**A contract is what others rely on without reading the code.** Callers outside the scope,
+users, and stored data depend on interfaces, what a screen looks like, and the shape of data.
+A change there cannot be judged from inside the repository alone, which is why it is asked
+about. A wrong result that its own callers never wanted is not a contract; fixing it is the
+point of this skill.
+
+**A test written after the code only records the code.** It pins what the code does now, right
+or wrong, so keeping it would present the current behavior as the specification. A spec test is
+written from evidence before the fix and fails first; that failure is what shows it tests the
+change. Scaffold tests exist only to catch undeclared changes during a fix, so they go when the
+item is done.
+
+**Results that do not change need a measurement.** A performance or memory fix passes the same
+tests as the code it replaced. Without numbers from before and after, "faster" or "no longer
+leaks" is a claim with nothing behind it.
+
+**An expected value that must change outside the declaration is a finding.** It means the fix
+changed something it did not say it would. Editing the expectation to pass would hide exactly
+the change the declaration exists to expose.
+
+## Examples
+
+Deciding or asking:
+
+```
+Decide: a function crashes on an empty list; every caller expects an empty result. Fix it,
+        citing the callers, with a spec test that fails first.
+Ask:    fixing a problem needs a new required parameter on a public function. Record it as an
+        ask item and ask after everything else is fixed, with what changes, the evidence,
+        and a recommendation.
+Bad:    asking "may I fix this?" for every internal bug, or stopping to ask at each ask item.
+```
+
+A test after a fix:
+
+```
+Bad:  write the test against the fixed code and commit it as the specification.
+Good: write the test from the callers' expectations, see it fail, then fix.
+```

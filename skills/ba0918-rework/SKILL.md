@@ -22,8 +22,9 @@ It does not cover:
 - Merging, pushing, filing issues, or deleting the worktree. The person decides these after
   reading the report.
 - Fixing anything outside the named scope, or running a flow to get agreement for doing so.
-  The one exception is a specification document outside the scope that is fixed as part of an
-  item whose code was decided to be right (see Rules).
+  The one exception is a document file outside the scope — a specification document, the
+  README, API documentation — fixed as part of an item whose code was decided to be right (see
+  Rules).
 
 **The top priority is not to add questions to the person.** When people are asked too often,
 they approve without reading, and asking stops meaning anything. What can be decided from
@@ -92,7 +93,11 @@ these cases:
   nothing says which one takes precedence. When the code is decided to be right, fix the
   specification document as part of the same item, even when that document is outside the
   scope, and say so in the report. This is the only edit allowed outside the scope: a document
-  left wrong keeps the mismatch and lets the same problem come back.
+  left wrong keeps the mismatch and lets the same problem come back. Outside the scope it
+  applies only to document files — specification documents, the README, API documentation. A
+  docstring, a promise in a type, or a test name in source code outside the scope is not
+  edited; record it as a proposed issue, since editing code files would make the diff larger
+  than expected.
 - A security fix that rejects input is not a contract change when that input was never valid
   under the specification (an injection string, a value outside the declared type's range). It
   is a contract change when the specification accepted that input.
@@ -194,8 +199,10 @@ report, as a proposed issue. Fixing it would make the diff larger than the perso
 review; they can call this skill again with that scope.
 
 An item inside the scope that cannot be fixed without changing callers outside the scope is
-held and reported. The one edit allowed outside the scope is a specification document fixed
-as part of an item whose code was decided to be right (see Rules).
+held and reported. The one edit allowed outside the scope is a document file (a specification
+document, the README, API documentation) fixed as part of an item whose code was decided to be
+right (see Rules). Docstrings, type promises, and test names in source code outside the scope
+are recorded as proposed issues, not edited.
 
 If there is nothing to fix, skip to the report: no branch or worktree is created.
 

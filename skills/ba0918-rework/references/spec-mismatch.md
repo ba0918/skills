@@ -19,9 +19,12 @@ What counts as the specification is defined under Terms in `SKILL.md`.
 
 When the evidence settles it — the callers' expectations, the tests, and the history of the
 change agree on one side — decide without asking. If the code is right, fix the document as
-part of the same item, even when the document is outside the scope, and say so in the report; that item is verified by comparing the
-document against the code, not by a new test. If the sources contradict each other and nothing
-says which takes precedence, the item is an ask item.
+part of the same item and say so in the report; that item is verified by comparing the
+document against the code, not by a new test. Outside the scope, only document files are fixed
+this way: specification documents, the README, API documentation. A docstring, a promise in a
+type, or a test name in source code outside the scope is not edited; record it as a proposed
+issue. If the sources contradict each other and nothing says which takes precedence, the item
+is an ask item.
 
 ## Pitfalls when fixing
 
@@ -29,7 +32,8 @@ says which takes precedence, the item is an ask item.
   the history of both before deciding which one is stale.
 - Changing a documented public interface to match the code. That is a contract change.
 - Fixing one of several documents that repeat the same claim and leaving the rest
-  contradicting it. When the code is right, find every copy, inside the scope or outside it,
-  and fix them in the same item.
+  contradicting it. When the code is right, find every copy and fix them in the same item:
+  every copy inside the scope, and copies in document files outside it. Copies in source code
+  outside the scope are recorded as proposed issues, not edited.
 - Treating a test name as the specification when its assertions and the callers all agree with
   the code. The name may be the stale part.

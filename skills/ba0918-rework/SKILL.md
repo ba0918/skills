@@ -271,7 +271,8 @@ items that depend on them, and carry them to the report with your recommendation
 Run the full test suite once more in the worktree. If there is a new failure:
 
 1. Find the commit that caused it by bisecting this branch's commits, from the commit the
-   branch started at (good) to the branch tip (bad), with `git bisect`.
+   branch started at (good) to the branch tip (bad), with `git bisect`. Once it is found, end
+   the bisect with `git bisect reset` so that the worktree is back on the branch tip.
 2. Revert that commit together with the later commits that depend on it (those that rewrite
    code it changed), newest first, with `git revert`. Hold every item whose commit was reverted.
 3. Run the full suite again. If a new failure remains, repeat from 1.

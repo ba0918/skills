@@ -14,3 +14,9 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+# Agents
+.agents/artifacts/
+.agents/runtime/
+.agents/tmp/
+.agents/HANDOFF.md

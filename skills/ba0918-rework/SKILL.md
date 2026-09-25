@@ -131,8 +131,8 @@ these cases:
   and say so in the report.
 - Change an existing test's expected value only where it covers the change you declared. If an
   expected value outside the declared change would have to change, treat it as an unintended
-  change: revert the item and hold it. Updating names or import paths in tests to follow a
-  rename or a move is not a change of expected value and is allowed.
+  change: discard the item's uncommitted changes and hold it. Updating names or import paths
+  in tests to follow a rename or a move is not a change of expected value and is allowed.
 - If a fix to code that affects behavior can be covered by neither a spec test nor a scaffold
   test, do not fix it; hold it. This does not apply to an item that only fixes a specification
   document, which is verified by comparing the document with the code, nor to a deletion, which
@@ -265,8 +265,9 @@ For each item that is not an ask item, in order:
 6. If they pass, first delete the scaffold tests that were not promoted and any temporary
    measurement code, so that neither is ever committed. Then commit this item alone as one
    commit. Follow the project's commit message conventions.
-7. If there is a new failure outside the declared change, revert this item's changes and
-   delete its scaffold tests, hold the item, and record which test failed and why. Move on to the next item.
+7. If there is a new failure outside the declared change, discard this item's uncommitted
+   changes and delete its scaffold tests, hold the item, and record which test failed and why.
+   Move on to the next item.
 
 After each item, re-check whether the remaining items still hold. An item that another fix
 removed is recorded as resolved by that fix, not fixed again.

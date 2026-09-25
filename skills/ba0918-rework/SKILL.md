@@ -265,8 +265,8 @@ For each item that is not an ask item, in order:
    improvement or only the declared visual change, first delete the scaffold tests that were
    not promoted and any temporary measurement code, so that neither is ever committed. Then
    commit this item alone as one commit. Follow the project's commit message conventions.
-7. If there is a new failure outside the declared change, or the comparison shows no
-   improvement or a visual change beyond the declared one, discard this item's uncommitted
+7. Otherwise — a new failure outside the declared change, or a comparison that does not show
+   exactly the declared improvement or visual change — discard this item's uncommitted
    changes, delete its scaffold tests and any temporary measurement code, hold the item, and
    record which test failed and why, or what the comparison showed. Move on to the next item.
 

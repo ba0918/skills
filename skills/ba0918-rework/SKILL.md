@@ -259,10 +259,12 @@ deletion's verification.
 
 ### 7. Ask the ask items together, then fix them
 
-When every other item is done, ask the ask items that advance permission does not cover, all
-at once (see Rules). Fix the answered items with the same steps as step 6, base items before
-the items that depend on them. In a run where no one can answer, fix none of them and carry
-them to the report.
+When every other item is done, fix the ask items that advance permission covers as
+recommended, without asking, with the same steps as step 6. Ask the ask items that advance
+permission does not cover, all at once (see Rules), and fix the answered items with the same
+steps as step 6. Base items go before the items that depend on them. In a run where no one can
+answer, leave the ask items that advance permission does not cover unfixed, together with the
+items that depend on them, and carry them to the report with your recommendation.
 
 ### 8. Run the full suite again
 

@@ -279,6 +279,36 @@ Run the full test suite once more in the worktree. If there is a new failure:
 
 The original commits and their reverts both stay in the history.
 
+### 9. Report
+
+Report every category below. Write "none" for a category with nothing in it rather than leaving
+it out.
+
+- **Fixed items**, each with: its perspective; what changed; the evidence; its spec test; the
+  measurements before and after (performance, memory, user interface captures); its commit.
+- **Ask items**: what was asked and the answer. In a run where no one could answer, list them
+  with your recommendation. An item the answer decided not to fix also goes into the proposed
+  issues.
+- **Held items**: the reason, and what fixing them would need.
+- **Proposed issues**, each as a title and a body: items not fixed, the same problem found
+  outside the scope (with its location), and code whose deletion could not be confirmed.
+  Filing them is the person's decision; do not file them.
+- **Items resolved by another fix**, naming that fix.
+- **Scaffold tests**: each by name, and whether it was deleted or promoted to a spec test.
+- **Branch and worktree**: the branch name and the worktree location, if they were created.
+- **Full test runs** at the baseline and at the end: the command, the output, and the pass and
+  fail counts.
+
+Also say whether the original working tree had uncommitted changes that were outside the
+diagnosis.
+
+When no problem was found, or every item ended up held, that is a correct result: report it as
+it is. Say that no branch was created, or that the branch was left empty. Do not add items that
+are not real problems to fill the report.
+
+With the report and the branch, the person decides whether to take the branch in, which
+commits to revert, and which proposed issues to file.
+
 ## Judgment
 
 **Every question spends the person's attention.** When most fixes wait for approval, people
@@ -349,3 +379,25 @@ Bad:  delete a function because a search finds no references, when handlers are 
 Bad:  the same injection flaw exists in a file outside the scope; fix it there too.
 Good: report its location as a proposed issue and leave it unchanged.
 ```
+
+## Evidence
+
+The report carries these, rather than asserting that the fixes are right:
+
+- **Full test runs**: the baseline and the final run, each with the command, the output, and
+  the pass and fail counts; tests already failing at the baseline are listed.
+- **Spec tests**: for each changed behavior, the test's failing output from before the fix and
+  its passing output after.
+- **Measurements**: for performance and memory items, the numbers before and after; for user
+  interface items, the captures before and after.
+- **Commits**: one per item, listed with its item; reverted commits and their reverts, if the
+  final run found a new failure.
+- **Deletions**: for each, the reference search, the dynamic-reach check, and the public-API
+  check.
+
+What is left behind, and what is not:
+
+- The branch and the worktree stay until the person removes them. This skill never deletes
+  them.
+- Scaffold tests and temporary measurement code live only in the worktree while their item is
+  in progress. They are never committed.

@@ -1,0 +1,254 @@
+---
+name: ba0918-codex-exec
+description: "Run one task through the Codex CLI (codex exec) with a prompt file, model, and environment the caller prepared, then return the exit code, the paths of the stdout and stderr files, and the list of files that changed in the repository. It does not write the prompt, judge the result, or choose a sandbox mode, worktree, or permissions. Runs only when the user names this executor, or when an instruction the user prepared (an assignment table, a local skill, an instruction file) names it; being loaded, or Codex merely coming up in conversation, is not a request. The working directory contents and the prompt are sent to the provider of the chosen model, without asking again before the run. Use when the user says run this with codex, have codex do this task, hand this to codex, or execute this prompt through codex exec. 日本語キーワード: codex で実行 codex に任せて codex のモデルで codex の実行役 codex exec でプロンプトを実行"
+---
+
+# Codex Executor
+
+## Scope
+
+This skill is an executor: it runs `codex exec` exactly once with a prompt file, a model, and an
+environment that the caller prepared, and returns what happened — the exit code, the paths of
+the stdout and stderr files, and the list of files that changed.
+
+It does not cover:
+
+- Writing or improving the prompt. The prompt file arrives complete; its content is the caller's.
+- Judging the result. The skill neither summarizes the output nor says whether the task
+  succeeded; the caller reads the files and decides.
+- Preparing the environment: choosing the sandbox mode, choosing or creating a worktree, or
+  setting permissions. The caller does that, through the working directory, the sandbox mode or
+  configuration profile it passes, or the pre-command it passes. The skill supplies none of them
+  by itself and does not enforce any of them.
+- Codex's other subcommands (`resume`, `review`, and the rest). The skill starts one new session
+  with `codex exec`.
+- Undoing changes. The skill reports changes and never reverts them.
+
+## When this runs
+
+Run only when one of these names this executor:
+
+- the user, directly ("run this with codex", "have codex investigate this");
+- an instruction the user prepared, in whatever form — an assignment table, a local skill that
+  combines this one with a task, an instruction file.
+
+Nothing else is a request. This skill being loaded, a task skill being loaded, or Codex coming
+up in conversation ("how do I use codex exec?") does not start a run.
+
+A run sends the contents of the working directory and the prompt to the provider of the chosen
+model. Being named counts as the decision to send them: do not ask for confirmation again before
+running.
+
+## Inputs
+
+| Input | Required | Default when not given |
+|---|---|---|
+| Prompt file — a self-contained task instruction | yes | — |
+| Model — a model name Codex accepts for `--model` | yes | — |
+| Working directory — where Codex runs, such as a prepared worktree | no | the current working directory |
+| Sandbox mode — `read-only`, `workspace-write`, or `danger-full-access` | no | none; `--sandbox` is omitted and Codex's configuration decides |
+| Profile — a Codex configuration profile, used to apply its settings | no | none; `--profile` is omitted |
+| Pre-command — a command placed in front of Codex, such as one that starts a sandbox; received as a list of words (an argument list) | no | none |
+| Command name — the name Codex is installed under | no | `codex` |
+| No-change — this run must not change the working directory | no | not set |
+| Time limit | no | none; wait however long the run takes |
+| Output location — where the stdout, stderr, and pre-run record files go | no | a new temporary directory, outside any repository |
+
+Do not choose a model, a sandbox mode, a profile, a pre-command, or anything else the caller did
+not pass. The only values the skill supplies are the defaults in this table. In particular, never
+add `--dangerously-bypass-approvals-and-sandbox` or any other flag that loosens the sandbox or
+approvals; a caller who wants that passes it through its own configuration.
+
+## Before running
+
+Stop without running, and tell the caller what is missing or wrong, when any of these holds:
+
+- The prompt file or the model was not passed.
+- The prompt file does not exist, is empty, or cannot be read.
+- The working directory does not exist.
+- The output location is inside the repository that contains the working directory — or, when
+  the working directory is not under git, inside the working directory itself. Compare resolved
+  absolute paths. Never move the output somewhere else silently: the caller would then look for
+  the files in the wrong place. When the output location is outside and does not exist yet,
+  create it.
+- The version check below does not find the command.
+
+Do not check how the model, the sandbox mode, or the profile are written. If one is wrong, Codex
+reports an error, and that error is the result.
+
+Then, in this order:
+
+1. **Check the command inside the pre-command.** Run the pre-command followed by
+   `<command name> --version`, in the working directory. If the command is not found, stop and
+   say so. The check runs inside the pre-command because a sandbox may resolve the command name
+   to a different installation than the one outside it.
+2. **Record the repository's state**, when the working directory is under git. Find the root of
+   the repository that contains it (`git rev-parse --show-toplevel`, run in the working
+   directory). Run every other git command in this skill at that root, because the paths git
+   reports are relative to it. Record, for the whole repository:
+   - the current commit (`git rev-parse HEAD`; record "none" before the first commit);
+   - every file with changes and every untracked file git does not ignore
+     (`git status --porcelain -z --untracked-files=all --no-renames`, which lists untracked files
+     one by one instead of collapsing a directory into one line, and a rename as its two paths).
+     `-z` separates entries with NUL and leaves each path exactly as it is; without it git quotes
+     paths that contain special or non-ASCII characters, and the quoted form is not a path the
+     next command can use. Each entry is two status letters, a space, and the path; take the
+     path after them as it is;
+   - the content hash of each of those files (`git hash-object <path>`), or "absent" for a file
+     that was deleted.
+
+   Write this record to a file in the output location, named per run like the output files
+   below, with `.before` as the ending. Keep its contents out of the conversation. When the
+   working directory is not under git, or git cannot be found, record nothing; the change list
+   will then be reported as not detectable.
+
+## Command
+
+Run this, in the working directory, with the prompt file as standard input:
+
+```
+[pre-command] <command name> exec --model <model> [--sandbox <sandbox mode>] [--profile <profile>] [--skip-git-repo-check] - < <prompt file>
+```
+
+- **Pre-command.** Place the words the caller passed in front, in the same order, each one
+  unchanged. Do not interpret them. When the caller passed the pre-command as one string, place
+  that string as one single word: do not split it on spaces and do not let a shell interpret it.
+- **The prompt goes in on standard input.** Pass `-` as the prompt argument and connect the
+  prompt file, unchanged, to the process's standard input. Do not also pass the prompt as an
+  argument: when both are given, Codex appends standard input to the argument as an extra block.
+  Reading from standard input keeps every byte as it is, whatever the prompt starts with and
+  however long it is. A pre-command must pass standard input through to Codex; if it does not,
+  Codex receives an empty prompt, and whatever it does then is the result.
+- **`--skip-git-repo-check` only outside git.** Add it only when the working directory is not
+  under git, because Codex refuses to run outside a git repository without it. Inside a
+  repository, leave Codex's own check in place.
+- **Sandbox mode and profile, only when passed.** Add `--sandbox` and `--profile` exactly as the
+  caller gave them, and omit each one otherwise.
+- **Output files.** Write stdout and stderr to two files in the output location, named uniquely
+  per run with the date and time and a random part — for example
+  `codex-20260924T101500Z-k3f9.stdout` and the same name with `.stderr`. Never overwrite an
+  existing file: if the name is taken, pick another random part.
+- **Default output format.** Keep Codex's default output: stdout then holds only the final
+  message, and progress goes to stderr. Do not add `--json`.
+
+## Running and waiting
+
+Start the command in a way that lets this session wait for it to finish, and wait until it
+exits. A run can take tens of minutes. Do not stop it or start it again to check on its
+progress; the stdout and stderr files are there to read after it ends.
+
+Only when a time limit was passed: note the process id of the command at start. Once the limit
+passes, stop that process and every process descended from it — first ask them to terminate,
+then force any that remain after a short grace period. Stopping only the outermost process is
+not enough: when a pre-command wraps Codex, Codex inside it would keep writing. Find the
+processes by their descent from the one you started, never by name, and stop no other process:
+another Codex run may be working at the same time. After they have stopped, build the change
+list as below, and mark the result as timed out.
+
+Some pre-commands start Codex so that it is not a descendant of the process you started — for
+example by asking a separate service to start it — and stopping the descendants does not stop
+it. A Codex outside the descendants cannot be seen from here. So on a timeout, when a
+pre-command was passed, or when, after stopping, you cannot confirm that no descendant remains,
+do not report the run as stopped: together with the timeout, say that Codex may still be
+running and may keep writing after the change list was built. Without a pre-command, Codex is
+the process you started, so you can confirm that it stopped.
+
+## Change list
+
+After the run ends — exit code 0, any other exit code, or timed out — build the change list by
+comparing the repository with the pre-run record. Skip this when nothing was recorded; the
+result then says changes could not be detected.
+
+1. Read the repository's state again, at the repository root and the same way as the pre-run
+   record, with `-z` so that no path comes back quoted: the current commit, the files with
+   changes and the untracked files git does not ignore, and their content hashes.
+2. If the current commit differs from the recorded one, note that the commit moved and list
+   the files changed between the two commits (`git diff --name-only -z <before> <after>`; when
+   there was no commit before, every file in the new commit, `git ls-tree -r --name-only -z HEAD`).
+   Here too, `-z` keeps the paths unquoted.
+3. Compare the union of: files with changes before, files with changes after, untracked files
+   before and after, and the files changed between the commits. Collecting this union catches a
+   file that had changes before the run and was put back to its committed content during it.
+4. For each file in the union, take its content hash before — from the pre-run record, or, for
+   a file the record does not list, the hash of that file in the recorded commit
+   (`git rev-parse <before>:<path>`), or "absent" when it is not there — and its content hash
+   now (`git hash-object <path>`, or "absent" when the file is gone). The file is added,
+   modified, or deleted when the two differ.
+5. The change list is the files from step 4 whose hashes differ, together with the files
+   changed between the commits from step 2. When the commit moved, the change list also states
+   that fact, with the commits before and after.
+
+Rules for the change list:
+
+- It covers the whole repository that contains the working directory, not only the working
+  directory. Files git ignores are not covered, and the result says so.
+- It compares the state before and after only. A file with changes before the run is listed
+  when its content changed again. A file that changed during the run and returned to its earlier
+  content is not listed.
+- It does not tell who made a change: Codex, the caller, or anything else running at the same
+  time. A caller that needs to tell them apart gives the run its own directory.
+- Nothing in it is reverted. The caller or the person decides what to do with each change.
+
+## Result
+
+Report these five things, without summarizing the output or judging whether the task went well:
+
+1. **Exit code.** On a timeout, say that the run timed out instead of reporting it as a normal
+   exit. When a pre-command was passed, or when it could not be confirmed that no descendant
+   remained after stopping, also say that Codex may still be running and may keep writing
+   after the change list was built.
+2. **The stdout file's path.** In the default output format it holds only Codex's final message.
+3. **The stderr file's path.**
+4. **The change list**, stated as the changes in the repository's git-visible files between the
+   start and the end of the run, not attributed to anyone, and excluding files git ignores. When
+   the commit moved during the run, say so, with the commits before and after, together with the
+   files changed between them. When the working directory is not under git, or git cannot be
+   found, say that changes could not be detected instead.
+5. **The permissions note:** the sandbox mode the run used — the one passed, or "not passed;
+   Codex's configuration decided" — and that `codex exec` rejects every approval request, so an
+   action the sandbox does not allow fails instead of waiting for someone to approve it.
+
+A failure of the pre-command and a failure of Codex are not told apart. Both show up as the
+exit code and in the stderr file.
+
+When the run was passed no-change, put one of these before everything else in the result:
+
+- the change list is not empty: say that changes occurred, and list them;
+- changes could not be detected: say so, because the run cannot be confirmed to have left the
+  directory unchanged.
+
+## Output files
+
+The stdout file, the stderr file, and the pre-run record stay in the output location. The skill
+never deletes them, and never deletes the prompt file either. Removing them is up to the caller
+or the person, whenever they choose. Codex also keeps its own session files in its home
+directory; the skill leaves them as Codex manages them.
+
+## Judgment
+
+**Why the sandbox mode is the caller's.** Codex can be made read-only from the command line, but
+whether a run should be read-only depends on the task: investigation and review want it, writing
+tasks do not. Choosing a default would make the skill decide that for every caller, and
+Codex's configuration may already set one. Passing the caller's choice through unchanged keeps
+the same skill usable for every kind of task.
+
+**Why the model is required when the sandbox mode is not.** Sending the working directory to a
+provider is justified by the caller having named the executor and the model. Leaving the model
+to Codex's configuration would send it to a provider the caller did not choose in this request.
+
+**Why the change list is reported, not enforced.** A no-change run that changed files is a fact
+the caller must see first, but only the caller knows whether a change was harmless. Reverting it
+automatically could destroy work the person wanted, so the skill reports and stops there. Even a
+read-only sandbox is not taken as proof: a pre-command or a configuration can widen what Codex
+may write, so the change list is built either way.
+
+**Why the prompt goes in on standard input.** Passed as an argument, a prompt starting with `-`
+could be read as a flag, a long prompt can exceed the argument limit, and any shell in between
+could expand it. Standard input has none of these problems.
+
+**Why the output lives outside the repository.** Output files inside it would show up in the
+change list themselves and leave the repository dirty.
+
+**Why the output format is the default.** The caller reads the output and judges it; in the
+default format stdout already holds just the final message, and a structured format adds
+nothing the skill uses.

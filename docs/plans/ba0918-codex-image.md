@@ -279,7 +279,7 @@ Specification: [自動テスト](../spec/ba0918-codex-image.md#自動テスト)�
 [人手確認チェックリスト](../spec/ba0918-codex-image.md#人手確認チェックリスト)。
 Prerequisites: Step 1〜8。
 May change: Step 1〜8 と同じ範囲（直すところがあったときだけ）。
-Done when: テストのコマンドで T-01〜T-16 が通る。バリデータが通る。`skills/ba0918-codex-image/` に
+Done when: テストのコマンドで T-01〜T-18 が通る。バリデータが通る。`skills/ba0918-codex-image/` に
 テストのファイルがない。本文に他のスキルへの依存と絶対パスがない。利用者の環境の値がないことは、
 `rg` では網羅できないため、受け入れの C-01 で人が読んで確かめる。
 Shown by: check — 1. `uv run --with pytest --with pillow pytest tests/ba0918-codex-image`
@@ -301,9 +301,9 @@ Stop and hand back if: なし。
 | `#新しいシリーズの始め方`、`#ざっくりした指示の清書` | Step 7 | C-05、C-06（人手） |
 | `#種類ごとの後処理` | Step 2 | T-02〜T-04、T-08 の後半 |
 | `#アニメーション` | Step 3、Step 4、Step 6、Step 7 | T-05、T-09〜T-13、C-07（人手） |
-| `#検収と作り直し` | Step 4、Step 5 | T-06〜T-08、T-14〜T-16、C-08（人手） |
+| `#検収と作り直し` | Step 4、Step 5 | T-06〜T-08、T-14〜T-18、C-08（人手） |
 | `#実行と後始末` | Step 7 | C-03（人手） |
-| `#後処理の入り口`、`#テスト` | Step 1〜6、Step 9 | T-01〜T-16、Step 9 の check |
+| `#後処理の入り口`、`#テスト` | Step 1〜6、Step 9 | T-01〜T-18、Step 9 の check |
 | `#保存する状態と寿命`、`#人の判断点` | Step 7 | 対応表、C-03、C-05〜C-08（人手） |
 | `#README` | Step 8 | 差分を読む、C-01 |
 

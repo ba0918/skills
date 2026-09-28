@@ -64,7 +64,26 @@ Style: <the user's style description>.
 Direction for this candidate: <what varies between the three: "warmer palette", "rounder,
 shorter proportions", "higher contrast">.
 
-<the same kind lines as skeleton 1: pixel sprite / illustration / web, per the answers given>
+<pixel sprite:>
+This is a pixel sprite of exactly <canvas_dots> x <canvas_dots> dots filling the whole square
+image. Every dot is a solid square of the same size, one colour each, with no anti-aliasing,
+blur, or gradients across a dot.
+<pixel sprite, transparent: true:>
+The background is fully transparent; only the character is opaque. Draw the character standing,
+feet near the bottom of the canvas, and keep it inside the canvas.
+<pixel sprite, transparent: false:>
+Draw the background as part of the sprite, on the same dot grid.
+
+<illustration, transparent: true:>
+The background is fully transparent. Keep the subject well away from the corners.
+<illustration, transparent: false:>
+Draw a full background. Compose for a <size> (<width>:<height>) frame.
+
+<web:>
+Draw it at an aspect ratio of <width>:<height> (<size>), filling the whole image with no borders.
+Keep the main subject and any important detail out of the outer tenth of every edge; that area
+may be cropped away.
+The image is fully opaque.
 
 <common closing lines>
 ```

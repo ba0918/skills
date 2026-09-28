@@ -220,9 +220,11 @@ For one asset:
 4. **Run Codex** inside the working folder, with the prompt on standard input:
 
    ```
-   codex exec --sandbox workspace-write --skip-git-repo-check [--model <model>] --image <the one image> - < prompt.md > codex.stdout 2> codex.stderr
+   codex exec --sandbox workspace-write -c sandbox_workspace_write.exclude_slash_tmp=true -c sandbox_workspace_write.exclude_tmpdir_env_var=true --skip-git-repo-check [--model <model>] --image <the one image> - < prompt.md > codex.stdout 2> codex.stderr
    ```
 
+   `workspace-write` alone also lets Codex write to `/tmp` and `$TMPDIR`; the two `-c` settings
+   take those away, so the working folder is the only place it can write. Keep them.
    Add `--model` only when the user named a model; otherwise Codex's default is used. Leave out
    `--image` when there is no image to attach. Set no time limit: wait until Codex exits, however
    long it takes.

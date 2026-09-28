@@ -58,8 +58,10 @@ the user exactly what is missing:
 
 1. `codex --version` succeeds.
 2. `codex features list` shows `image_generation` as enabled.
-3. A way to run the post-processing exists: `uv` (`uv --version`), or a Python that can import
-   Pillow (`python3 -c "import PIL"`).
+3. The post-processing script actually starts: `uv run --with pillow scripts/codex_image.py
+   --help` succeeds, or, when Pillow is installed, `python3 scripts/codex_image.py --help` does.
+   The script loads Pillow before printing its help, so this also catches Pillow failing to
+   install. Run every later step of the script the same way as the command that succeeded.
 4. For an animation: the series is `kind: pixel` with `transparent: true`, and the character's
    stand image `<character>/final.png` exists in the series folder (see Animation).
 

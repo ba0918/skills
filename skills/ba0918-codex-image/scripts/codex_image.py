@@ -151,6 +151,85 @@ def make_template(stand, frames):
     return sheet
 
 
+def animation_inputs(series, frames, stand_path):
+    """Validate an animation request and return the stand; the sheet rules only fit transparent pixel sprites."""
+    check_frames(frames)
+    if series["kind"] != "pixel" or not series["transparent"]:
+        raise InputError("--frames needs a series with kind: pixel and transparent: true")
+    if stand_path is None:
+        raise InputError("--frames needs --stand, the adopted stand image of the character")
+    stand = load_stand(stand_path)
+    if stand.width != series["canvas_dots"]:
+        raise InputError(
+            f"the stand image is {stand.width} dots wide but the series has canvas_dots: {series['canvas_dots']}"
+        )
+    return harden_alpha(stand)
+
+
+def cell_box(index, dots):
+    left = (index % SHEET_COLUMNS) * dots
+    top = (index // SHEET_COLUMNS) * dots
+    return (left, top, left + dots, top + dots)
+
+
+def opaque_rows(cell):
+    """Indices of the rows that hold at least one opaque pixel, top to bottom."""
+    alpha = cell.getchannel("A")
+    return [y for y in range(cell.height) if alpha.crop((0, y, cell.width, y + 1)).getbbox()]
+
+
+def ground_shifts(sheet, dots, frames):
+    """How far each frame must move down so its feet sit on the stand's feet.
+
+    Returns (shifts, overflowing): shifts maps frame index to rows to move down (negative is up);
+    overflowing lists the frame numbers (1-based) whose body would leave the top of the cell.
+    """
+    stand_rows = opaque_rows(sheet.crop(cell_box(0, dots)))
+    if not stand_rows:
+        raise InputError("the stand image has no opaque dot to find its feet")
+    ground = stand_rows[-1]
+    shifts, overflowing = {}, []
+    for index in range(1, frames):
+        rows = opaque_rows(sheet.crop(cell_box(index, dots)))
+        if not rows:
+            continue
+        shift = ground - rows[-1]
+        if rows[0] + shift < 0:
+            overflowing.append(index + 1)
+        shifts[index] = shift
+    return shifts, overflowing
+
+
+def apply_shifts(sheet, dots, shifts):
+    out = sheet.copy()
+    for index, shift in shifts.items():
+        box = cell_box(index, dots)
+        cell = sheet.crop(box)
+        moved = Image.new("RGBA", (dots, dots), (0, 0, 0, 0))
+        moved.paste(cell, (0, shift))
+        out.paste(moved, box[:2])
+    return out
+
+
+def process_sheet(series, raw, frames, stand, align_feet):
+    dots = series["canvas_dots"]
+    sheet = harden_alpha(sample_grid(raw, dots * SHEET_COLUMNS, dots * sheet_rows(frames)))
+    sheet.paste(stand, (0, 0))
+    empty = Image.new("RGBA", (dots, dots), (0, 0, 0, 0))
+    for index in range(frames, SHEET_COLUMNS * sheet_rows(frames)):
+        sheet.paste(empty, cell_box(index, dots)[:2])
+    if not align_feet:
+        return sheet
+    shifts, overflowing = ground_shifts(sheet, dots, frames)
+    if overflowing:
+        raise InputError(
+            "aligning the feet would push frames "
+            + ", ".join(str(n) for n in overflowing)
+            + " above the top of their cells; regenerate the sheet or pass --no-ground if the motion leaves the ground"
+        )
+    return apply_shifts(sheet, dots, shifts)
+
+
 def crop_to_ratio(image, size):
     """Cut the largest centred region with the same aspect ratio as size."""
     width, height = image.size
@@ -240,8 +319,12 @@ def run_template(args):
 
 def run_process(args):
     series = parse_series(args.series)
+    stand = None if args.frames is None else animation_inputs(series, args.frames, args.stand)
     raw = load_image(args.raw)
-    final = PROCESSORS[series["kind"]](series, raw)
+    if stand is None:
+        final = PROCESSORS[series["kind"]](series, raw)
+    else:
+        final = process_sheet(series, raw, args.frames, stand, align_feet=not args.no_ground)
     save_image(final, args.out)
     return 0
 

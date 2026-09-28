@@ -1,3 +1,4 @@
+import math
 import random
 import subprocess
 import sys
@@ -67,3 +68,29 @@ def sprite(dots, seed=1):
             if (x - centre) ** 2 + (y - centre) ** 2 <= (dots * 0.4) ** 2:
                 image.putpixel((x, y), (rng.randrange(256), rng.randrange(256), rng.randrange(256), 255))
     return image
+
+
+def figure(width, height, seed=2):
+    """A fully opaque block of random colours, used as a character in sheet tests."""
+    rng = random.Random(seed)
+    image = Image.new("RGBA", (width, height))
+    for y in range(height):
+        for x in range(width):
+            image.putpixel((x, y), (rng.randrange(256), rng.randrange(256), rng.randrange(256), 255))
+    return image
+
+
+def place(character, left, top, dots):
+    """A dots x dots transparent cell with the character pasted at (left, top)."""
+    cell = blank(dots, dots)
+    cell.paste(character, (left, top))
+    return cell
+
+
+def sheet(cells, dots, scale=1):
+    """Lay the cells out four to a row, then enlarge by scale with nearest-neighbour."""
+    rows = math.ceil(len(cells) / 4)
+    image = blank(dots * 4, dots * rows)
+    for index, cell in enumerate(cells):
+        image.paste(cell, ((index % 4) * dots, (index // 4) * dots))
+    return image.resize((image.width * scale, image.height * scale), Image.NEAREST)

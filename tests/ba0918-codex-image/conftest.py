@@ -50,3 +50,7 @@ def save_png(tmp_path):
 
 def blank(width, height, color=(0, 0, 0, 0)):
     return Image.new("RGBA", (width, height), color)
+
+
+def pixels(image):
+    return [image.getpixel((x, y)) for y in range(image.height) for x in range(image.width)]

@@ -9,6 +9,9 @@ import re
 import sys
 from pathlib import Path
 
+from PIL import Image
+
+ALPHA_THRESHOLD = 128
 KINDS = ("pixel", "illustration", "web")
 REQUIRED_FIELDS = {
     "pixel": ("canvas_dots", "transparent"),
@@ -69,6 +72,101 @@ def parse_series(path):
     return series
 
 
+def load_image(path):
+    try:
+        with Image.open(path) as image:
+            return image.convert("RGBA")
+    except OSError as error:
+        raise InputError(f"cannot read image {path}: {error}")
+
+
+def save_image(image, path):
+    try:
+        image.save(path)
+    except OSError as error:
+        raise InputError(f"cannot write {path}: {error}")
+
+
+def sample_grid(image, columns, rows):
+    """Pick the colour at the centre of each cell of a columns x rows grid laid over the image."""
+    width, height = image.size
+    xs = [(2 * i + 1) * width // (2 * columns) for i in range(columns)]
+    ys = [(2 * j + 1) * height // (2 * rows) for j in range(rows)]
+    source = image.load()
+    out = Image.new("RGBA", (columns, rows))
+    target = out.load()
+    for j, y in enumerate(ys):
+        for i, x in enumerate(xs):
+            target[i, j] = source[x, y]
+    return out
+
+
+def harden_alpha(image):
+    """Make each pixel fully opaque or fully transparent (0, 0, 0, 0) at the alpha threshold."""
+    out = image.copy()
+    pixels = out.load()
+    for y in range(out.height):
+        for x in range(out.width):
+            r, g, b, a = pixels[x, y]
+            pixels[x, y] = (r, g, b, 255) if a >= ALPHA_THRESHOLD else (0, 0, 0, 0)
+    return out
+
+
+def process_pixel(series, raw):
+    dots = series["canvas_dots"]
+    final = sample_grid(raw, dots, dots)
+    if series["transparent"]:
+        return harden_alpha(final)
+    return final.convert("RGB")
+
+
+def crop_to_ratio(image, size):
+    """Cut the largest centred region with the same aspect ratio as size."""
+    width, height = image.size
+    target_width, target_height = size
+    if width * target_height > height * target_width:
+        crop_width = round(height * target_width / target_height)
+        left = (width - crop_width) // 2
+        return image.crop((left, 0, left + crop_width, height))
+    crop_height = round(width * target_height / target_width)
+    top = (height - crop_height) // 2
+    return image.crop((0, top, width, top + crop_height))
+
+
+def cover_opaque(image, size):
+    """Crop the centre to the ratio of size, scale it to exactly size, and drop the alpha channel."""
+    return crop_to_ratio(image, size).resize(size, Image.LANCZOS).convert("RGB")
+
+
+def process_web(series, raw):
+    return cover_opaque(raw, series["size"])
+
+
+def fit_within(image, size):
+    """Scale the whole image to fit inside size and centre it on a transparent canvas."""
+    width, height = image.size
+    target_width, target_height = size
+    scale = min(target_width / width, target_height / height)
+    scaled_size = (max(1, round(width * scale)), max(1, round(height * scale)))
+    scaled = image.resize(scaled_size, Image.LANCZOS)
+    canvas = Image.new("RGBA", size, (0, 0, 0, 0))
+    canvas.paste(scaled, ((target_width - scaled_size[0]) // 2, (target_height - scaled_size[1]) // 2))
+    return canvas
+
+
+def process_illustration(series, raw):
+    if series["transparent"]:
+        return fit_within(raw, series["size"])
+    return cover_opaque(raw, series["size"])
+
+
+PROCESSORS = {
+    "illustration": process_illustration,
+    "pixel": process_pixel,
+    "web": process_web,
+}
+
+
 def build_parser():
     parser = argparse.ArgumentParser(prog="codex_image.py")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -101,12 +199,21 @@ def build_parser():
     return parser
 
 
+def run_process(args):
+    series = parse_series(args.series)
+    raw = load_image(args.raw)
+    final = PROCESSORS[series["kind"]](series, raw)
+    save_image(final, args.out)
+    return 0
+
+
 def run_check(args):
     parse_series(args.series)
     return 0
 
 
 COMMANDS = {
+    "process": run_process,
     "check": run_check,
 }
 

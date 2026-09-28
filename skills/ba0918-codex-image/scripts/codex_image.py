@@ -295,7 +295,7 @@ def strongest_near(correlation, lag):
 def estimate_dot_size(image, axis):
     """The spacing of repeating edges along the axis in pixels, or None when no spacing repeats.
 
-    A spacing counts when its autocorrelation rises clearly above the dip before it and repeats
+    A spacing counts when its autocorrelation is positive, rises clearly above the dip before it, and repeats
     at twice the spacing; a smooth outline correlates at every short lag and never dips.
     """
     profile = edge_profile(image, axis)
@@ -304,7 +304,7 @@ def estimate_dot_size(image, axis):
         return None
     for lag in range(2, len(correlation) - 1):
         value = correlation[lag]
-        if value < correlation[lag - 1] or value < correlation[lag + 1]:
+        if value <= 0 or value < correlation[lag - 1] or value < correlation[lag + 1]:
             continue
         if value - min(correlation[lag // 2 : lag]) < PEAK_CORRELATION:
             continue

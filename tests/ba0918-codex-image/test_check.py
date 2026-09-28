@@ -1,4 +1,5 @@
 import json
+import math
 import random
 import re
 
@@ -247,6 +248,33 @@ def test_check_reports_null_dot_sizes_for_a_pixel_sprite_whose_dot_size_cannot_b
     assert outcome["result"] == "undetermined"
     assert outcome["measures"] == {"dot_size_x": None, "dot_size_y": None}
 
+
+
+def uneven_stripes(size=640, period=60):
+    """Vertical stripes whose column-to-column change follows a 60 px wave with a strong second harmonic.
+
+    Its edge autocorrelation has a local peak below zero next to other lags below zero.
+    """
+    image = Image.new("RGBA", (size, size))
+    red, rising = 0, True
+    for x in range(size):
+        if x:
+            wave = 2 * math.pi * x / period
+            step = round(60 * (1 + 0.5 * math.cos(wave) + 0.5 * math.cos(2 * wave)))
+            if rising and red + step > 255:
+                rising = False
+            if not rising and red - step < 0:
+                rising = True
+            red = red + step if rising else red - step
+        image.paste((red, 0, 0, 255), (x, 0, x + 1, size))
+    return image
+
+
+def test_check_returns_a_verdict_for_a_raw_whose_edge_correlation_peaks_below_zero(run, write_series, save_png):
+    outcome = check_pixel(run, write_series, save_png, uneven_stripes())
+
+    assert outcome["result"] in {"pass", "fail", "undetermined"}
+    assert set(outcome["measures"]) == DOT_SIZE_KEYS
 
 @pytest.mark.parametrize("flipped, expected", [(8, "pass"), (20, "fail")])
 def test_check_reports_the_dot_sizes_and_the_top_left_difference_of_a_sheet_whatever_the_result(

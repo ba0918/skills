@@ -18,7 +18,7 @@
 |---|---|
 | Install | |
 | Build | |
-| Test | |
+| Test | `uv run --with pytest --with pillow pytest tests/ba0918-codex-image` |
 | Lint | `agentskills validate ./skills/<name>` |
 | Run locally | |
 

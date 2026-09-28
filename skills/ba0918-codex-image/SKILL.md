@@ -254,8 +254,9 @@ For one asset:
 7. **Process** the accepted raw image into `final.png`; for an animation, also make
    `preview.gif`.
 8. **Store** `final.png`, `raw.png`, `prompt.md`, and `preview.gif` (animations) in the asset
-   folder, overwriting a remade asset. Then delete the working folder and any other temporary
-   files this run made.
+   folder, overwriting a remade asset — or, when the best result could not be processed, only
+   `raw.png` and `prompt.md` (see Acceptance and retries). Then delete the working folder and any
+   other temporary files this run made.
 9. **Show the user** the finished asset, the preview, and the check result, and let them decide.
 
 ## Acceptance and retries
@@ -289,8 +290,11 @@ some item could not be judged; otherwise it is `pass`.
 - A non-zero Codex exit, or an exit of 0 without `raw.png`, during retries stops everything, as
   in step 5 of the procedure.
 - When `process` refuses a sheet because frames would leave the top of their cells — possible for
-  a best result that failed that check — hand over the raw image with the reasons instead of a
-  finished sheet.
+  a best result that failed that check — there is no finished sheet. Put only `raw.png` and
+  `prompt.md` in the asset folder and delete the previous version's `final.png` and
+  `preview.gif` there, so a new raw image never sits beside an old finished asset (git keeps the
+  previous version). Tell the user that no finished asset could be made, and why, with the raw
+  image and the reasons.
 
 The user always has the last word. When they reject the result, append their feedback to
 `prompt.md`, add it to the prompt, and generate again. These remakes are separate from the

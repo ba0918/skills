@@ -160,8 +160,12 @@ When the series has no reference image yet:
    leaves out. Without a `series.md`, ask in one message for what cannot be derived: the kind,
    the first size or canvas, whether the background is transparent, and what the assets are for.
 2. Without an existing `series.md`, write the front matter those answers give to a temporary
-   `series.md` outside the project, so the candidates can be processed and checked. With one,
-   pass it to `process` and `check` directly.
+   `series.md` outside the project, so the candidates can be processed and checked. With one
+   whose front matter lacks a field its kind needs (see the field table), show the user the
+   missing fields, filled in from their answers, as a diff to that `series.md`, and write them
+   only after the user agrees; if they decline, generate nothing, since `process` and `check`
+   would stop on the missing field after a paid generation. Then pass the existing `series.md`
+   to `process` and `check` directly.
 3. Generate three candidates from the style description alone, each varying the direction a
    little (colour, proportions, and so on), without an attached image and each in its own
    working folder. Run `process` and `check` on each. Do not retry candidates automatically;

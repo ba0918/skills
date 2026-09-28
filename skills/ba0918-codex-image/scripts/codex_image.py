@@ -372,6 +372,15 @@ def judge_corners(sampled, dots, frames=None):
     return reasons
 
 
+def judge_empty_frames(sampled, dots, frames):
+    """Reasons naming each frame, within the frame count, that has no opaque dot."""
+    return [
+        f"frame {index + 1} is empty: it has no opaque dot"
+        for index in range(frames)
+        if not sampled.crop(cell_box(index, dots)).getchannel("A").getbbox()
+    ]
+
+
 def check_pixel(series, raw):
     dots = series["canvas_dots"]
     reasons, undetermined, measures = judge_dot_size(raw, dots, 1, 1)
@@ -387,6 +396,7 @@ def check_sheet(series, raw, frames, stand, align_feet):
     stand_reasons, measures["top_left_diff"] = judge_stand(sampled, stand, dots)
     reasons += stand_reasons
     reasons += judge_corners(sampled, dots, frames)
+    reasons += judge_empty_frames(sampled, dots, frames)
     if align_feet:
         _, overflowing = ground_shifts(assemble_sheet(sampled, dots, frames, stand), dots, frames)
         if overflowing:

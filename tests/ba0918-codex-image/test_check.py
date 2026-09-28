@@ -1,5 +1,6 @@
 import json
 import random
+import re
 
 import pytest
 from PIL import Image
@@ -125,12 +126,19 @@ def test_check_on_a_sheet_without_a_measurable_dot_size_follows_the_top_left_fra
     stand = monochrome_disc(DOTS, 6)
     raw = blank(DOTS * 10 * 4, DOTS * 10 * 2)  # one flat (transparent) colour
     if draw_stand:
-        raw.paste(smooth_disc(DOTS * 10, 60), (0, 0))
+        # every frame drawn smoothly, the stand's disc first, then discs of other sizes and places
+        # so that the cells do not repeat at a spacing the dot-size estimate could pick up
+        discs = [(60, 0, 0), (40, -15, 20), (55, 10, -12), (35, 20, 8), (50, -12, -18), (30, 25, 15), (58, -8, 14), (44, 14, -20)]
+        for index, (radius, dx, dy) in enumerate(discs):
+            cell = blank(DOTS * 10, DOTS * 10)
+            cell.paste(smooth_disc(2 * radius, radius), (80 - radius + dx, 80 - radius + dy))
+            raw.paste(cell, ((index % 4) * DOTS * 10, (index // 4) * DOTS * 10))
 
     outcome = check_sheet(run, write_series, save_png, raw, stand, 8)
 
     assert outcome["result"] == expected
     assert outcome["reasons"]
+    assert outcome["measures"]["dot_size_x"] is None and outcome["measures"]["dot_size_y"] is None
 
 
 def overflowing_sheet():
@@ -310,3 +318,14 @@ def test_check_fails_a_sheet_with_an_opaque_corner_dot_in_one_frame(run, write_s
 
     assert outcome["result"] == "fail"
     assert outcome["reasons"]
+
+
+def test_check_fails_a_sheet_with_an_empty_frame_and_names_it(run, write_series, save_png):
+    stand = sprite(DOTS)
+    cells = [stand] + [sprite(DOTS, seed=s) for s in range(5, 12)]
+    cells[2] = blank(DOTS, DOTS)
+
+    outcome = check_sheet(run, write_series, save_png, sheet(cells, DOTS, scale=10), stand, 8)
+
+    assert outcome["result"] == "fail"
+    assert any(re.search(r"\b3\b", reason) for reason in outcome["reasons"])

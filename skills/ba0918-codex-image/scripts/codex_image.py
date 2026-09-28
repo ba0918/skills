@@ -21,6 +21,7 @@ DOT_SIZE_TOLERANCE = 0.10  # estimated dot size may differ from the expected one
 MAX_STAND_DIFFERENCE = 0.05  # share of top-left dots allowed to differ from the stand
 COLOUR_DIFFERENCE = 60  # summed RGB difference above which two opaque dots differ
 CORNER_FRACTION = 0.02  # side of the corner squares that must be clear, as a share of each edge
+CORNER_NOISE_ALPHA = 8  # corner alpha below this is invisible generator noise and counts as clear
 RATIO_TOLERANCE = 0.05  # a web raw's aspect ratio may differ from the size's by this fraction
 PREVIEW_SIDE = 256  # a preview frame is enlarged by whole steps to about this many pixels
 PREVIEW_BACKGROUND = (200, 200, 200, 255)
@@ -417,9 +418,9 @@ def check_illustration(series, raw):
         "bottom-right": (raw.width - corner_width, raw.height - corner_height),
     }
     reasons = [
-        f"the {name} corner ({corner_width}x{corner_height} px) is not fully transparent"
+        f"the {name} corner ({corner_width}x{corner_height} px) is not transparent (alpha {CORNER_NOISE_ALPHA} or more)"
         for name, (left, top) in corners.items()
-        if alpha.crop((left, top, left + corner_width, top + corner_height)).getextrema()[1] > 0
+        if alpha.crop((left, top, left + corner_width, top + corner_height)).getextrema()[1] >= CORNER_NOISE_ALPHA
     ]
     return verdict(reasons, [])
 

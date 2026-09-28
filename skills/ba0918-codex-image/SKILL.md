@@ -271,7 +271,7 @@ For one asset:
 |---|---|
 | Pixel sprite | The estimated dot size is within 10% of the expected size, horizontally and vertically; when no dot size can be estimated, this item is undetermined. With `transparent: true`, the four corner dots, picked on the expected grid, are transparent — in each frame, for a sheet |
 | Animation | As above, and the top-left cell picked on the expected grid differs from the stand image in at most 5% of its dots, every frame within the frame count has an opaque dot (the reasons name each empty frame by number), and — unless `--no-ground` — aligning the feet pushes no frame above the top of its cell |
-| Illustration | With `transparent: true`, a small square at each corner is fully transparent. With `false` there is nothing to judge |
+| Illustration | With `transparent: true`, a small square at each corner is transparent: alpha below 8 (of 255) counts as transparent, so the invisible noise generators leave does not fail it. With `false` there is nothing to judge |
 | Web image | The raw image's aspect ratio is within 5% of the ratio of `size` |
 
 Sizes of illustrations and web images are not checked: `process` always produces `size`.

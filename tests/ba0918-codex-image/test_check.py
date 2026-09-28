@@ -199,6 +199,19 @@ def test_check_passes_a_transparent_illustration_whose_corners_are_clear(run, wr
     assert outcome == {"result": "pass", "reasons": [], "measures": {}}
 
 
+@pytest.mark.parametrize("alpha, result", [(7, "pass"), (8, "fail")])
+def test_check_treats_faint_noise_in_a_transparent_illustration_corner_as_transparent(
+    run, write_series, save_png, alpha, result
+):
+    canvas = blank(500, 400)
+    canvas.paste(smooth_disc(400, 150), (50, 0))
+    canvas.putpixel((0, 399), (0, 0, 0, alpha))  # generators leave invisible alpha noise like this
+
+    outcome = check_single(run, write_series, save_png, canvas, kind="illustration", size="1000x800", transparent="true")
+
+    assert outcome["result"] == result
+
+
 def test_check_passes_an_opaque_illustration_as_there_is_nothing_to_judge(run, write_series, save_png):
     raw = Image.new("RGBA", (700, 300), (30, 30, 30, 255))
 

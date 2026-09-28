@@ -89,7 +89,12 @@ codex_image.py preview  --sheet <PNG> --frames <F> --out <GIF> [--ms <N>]
   with `--frames` (2 to 16, needs `--stand`) it handles an animation sheet. `--no-ground` keeps
   frames at their drawn height instead of aligning the feet.
 - `check` judges the raw image without changing it and prints
-  `{"result": "pass" | "fail" | "undetermined", "reasons": [...]}`, exiting 0 for all three.
+  `{"result": "pass" | "fail" | "undetermined", "reasons": [...], "measures": {...}}`, exiting 0
+  for all three. `measures` is printed whatever the result. For a pixel sprite it holds
+  `dot_size_x` and `dot_size_y`, the estimated size of one dot in px (`null` when it cannot be
+  estimated); for an animation it also holds `top_left_diff`, the share of the top-left cell's
+  dots that differ from the stand image. Illustrations and web images measure nothing, so their
+  `measures` is empty.
 - Any subcommand exits non-zero with the reason on standard error when an input is wrong — for
   example a `series.md` with a missing or malformed field. `process` also exits non-zero, writing
   nothing, when aligning the feet would push a frame above the top of its cell.
@@ -258,10 +263,13 @@ Sizes of illustrations and web images are not checked: `process` always produces
 - **`fail`**: generate again automatically with the same prompt, at most twice. Keep each earlier
   raw image in a temporary folder outside the working folder, so the working folder again holds
   only the prompt and the image. When the third attempt also fails, hand over the best result
-  with its reasons, processed as usual. The best result is: for a pixel sprite, the one whose dot
-  size is closest to the expected size (the reasons state both); for an animation, the one whose
-  top-left cell differs least — an attempt whose top-left cell passed beats one whose did not;
-  otherwise, or on a tie, the latest attempt.
+  with its reasons, processed as usual. Compare the attempts by their `measures`:
+  - for a pixel sprite, the one whose larger deviation from the expected dot size, over the two
+    axes, is smallest. The deviation is relative to the expected size: horizontally the raw
+    image's width ÷ `canvas_dots`, vertically its height ÷ `canvas_dots`;
+  - for an animation, the one with the smallest `top_left_diff`;
+  - otherwise — when the numbers cannot be compared, such as a `null` dot size, or on a tie — the
+    latest attempt.
 - **`undetermined`**: not a failure. Do not retry; hand over the result and say that the check
   could not decide.
 - A non-zero Codex exit during retries stops everything, as in step 5 of the procedure.

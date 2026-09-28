@@ -35,10 +35,9 @@ def test_check_passes_a_dot_size_at_or_within_ten_percent_of_the_expected_size(
     run, write_series, save_png, pitch
 ):
     # 640 px / 32 dots: 20 px per dot expected
-    assert check_pixel(run, write_series, save_png, dot_grid(640, 640, pitch, pitch)) == {
-        "result": "pass",
-        "reasons": [],
-    }
+    outcome = check_pixel(run, write_series, save_png, dot_grid(640, 640, pitch, pitch))
+
+    assert (outcome["result"], outcome["reasons"]) == ("pass", [])
 
 
 @pytest.mark.parametrize("pitch", [24, 16])
@@ -158,7 +157,7 @@ def test_check_with_no_ground_does_not_judge_rising_above_the_cell_top(run, writ
 
     outcome = check_sheet(run, write_series, save_png, raw, stand, 8, "--no-ground")
 
-    assert outcome == {"result": "pass", "reasons": []}
+    assert (outcome["result"], outcome["reasons"]) == ("pass", [])
 
 
 def check_single(run, write_series, save_png, raw, **fields):
@@ -188,7 +187,7 @@ def test_check_passes_a_transparent_illustration_whose_corners_are_clear(run, wr
 
     outcome = check_single(run, write_series, save_png, canvas, kind="illustration", size="1000x800", transparent="true")
 
-    assert outcome == {"result": "pass", "reasons": []}
+    assert outcome == {"result": "pass", "reasons": [], "measures": {}}
 
 
 def test_check_passes_an_opaque_illustration_as_there_is_nothing_to_judge(run, write_series, save_png):
@@ -196,7 +195,7 @@ def test_check_passes_an_opaque_illustration_as_there_is_nothing_to_judge(run, w
 
     outcome = check_single(run, write_series, save_png, raw, kind="illustration", size="1000x800", transparent="false")
 
-    assert outcome == {"result": "pass", "reasons": []}
+    assert outcome == {"result": "pass", "reasons": [], "measures": {}}
 
 
 @pytest.mark.parametrize(
@@ -212,3 +211,58 @@ def test_check_judges_a_web_image_by_its_ratio_within_five_percent_of_the_size(
 
     assert outcome["result"] == expected
     assert bool(outcome["reasons"]) == (expected == "fail")
+
+
+DOT_SIZE_KEYS = {"dot_size_x", "dot_size_y"}
+
+
+@pytest.mark.parametrize("pitch, expected", [(20, "pass"), (24, "fail")])
+def test_check_reports_the_estimated_dot_sizes_of_a_pixel_sprite_whatever_the_result(
+    run, write_series, save_png, pitch, expected
+):
+    series = write_series(kind="pixel", canvas_dots=32, transparent="false")
+
+    outcome = verdict(run("check", "--series", series, "--raw", save_png(dot_grid(640, 640, pitch, pitch), "raw.png")))
+
+    assert outcome["result"] == expected
+    assert set(outcome["measures"]) == DOT_SIZE_KEYS
+    assert all(isinstance(outcome["measures"][key], float) for key in DOT_SIZE_KEYS)
+
+
+def test_check_reports_null_dot_sizes_for_a_pixel_sprite_whose_dot_size_cannot_be_estimated(
+    run, write_series, save_png
+):
+    series = write_series(kind="pixel", canvas_dots=32, transparent="true")
+
+    outcome = verdict(run("check", "--series", series, "--raw", save_png(smooth_disc(640, 250), "raw.png")))
+
+    assert outcome["result"] == "undetermined"
+    assert outcome["measures"] == {"dot_size_x": None, "dot_size_y": None}
+
+
+@pytest.mark.parametrize("flipped, expected", [(8, "pass"), (20, "fail")])
+def test_check_reports_the_dot_sizes_and_the_top_left_difference_of_a_sheet_whatever_the_result(
+    run, write_series, save_png, flipped, expected
+):
+    stand = sprite(DOTS)
+    cells = [flip_to_transparent(stand, flipped)] + [sprite(DOTS, seed=s) for s in (5, 6, 7)]
+
+    outcome = check_sheet(run, write_series, save_png, sheet(cells, DOTS, scale=10), stand, 4)
+
+    assert outcome["result"] == expected
+    assert set(outcome["measures"]) == DOT_SIZE_KEYS | {"top_left_diff"}
+    assert outcome["measures"]["top_left_diff"] == pytest.approx(flipped / DOTS**2)
+
+
+@pytest.mark.parametrize(
+    "fields, raw",
+    [
+        ({"kind": "illustration", "size": "1000x800", "transparent": "true"}, blank(500, 400)),
+        ({"kind": "illustration", "size": "1000x800", "transparent": "false"}, blank(500, 400)),
+        ({"kind": "web", "size": "1920x1080"}, Image.new("RGB", (1800, 900))),
+    ],
+)
+def test_check_reports_no_measures_for_kinds_that_measure_nothing(run, write_series, save_png, fields, raw):
+    outcome = check_single(run, write_series, save_png, raw, **fields)
+
+    assert outcome["measures"] == {}

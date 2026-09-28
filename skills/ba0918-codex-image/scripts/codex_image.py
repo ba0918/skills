@@ -318,18 +318,19 @@ def estimate_dot_size(image, axis):
 
 
 def judge_dot_size(raw, dots, columns, rows):
-    """Reasons the dot size fails, and whether it could be estimated at all."""
-    reasons, undetermined = [], []
+    """Reasons the dot size fails, what could not be estimated, and the estimates as measures."""
+    reasons, undetermined, measures = [], [], {}
     for axis, name, length, count in ((0, "horizontal", raw.width, dots * columns), (1, "vertical", raw.height, dots * rows)):
         expected = length / count
         estimate = estimate_dot_size(raw, axis)
+        measures["dot_size_x" if axis == 0 else "dot_size_y"] = estimate
         if estimate is None:
             undetermined.append(f"the {name} dot size could not be estimated (expected {expected:.1f} px)")
         elif abs(estimate - expected) > DOT_SIZE_TOLERANCE * expected:
             reasons.append(
                 f"the {name} dot size is about {estimate:.1f} px, expected {expected:.1f} px within 10%"
             )
-    return reasons, undetermined
+    return reasons, undetermined, measures
 
 
 def dots_differ(a, b):
@@ -340,31 +341,33 @@ def dots_differ(a, b):
 
 
 def judge_stand(sampled, stand, dots):
+    """Reasons the top-left frame fails against the stand, and the share of its dots that differ."""
     top_left = sampled.crop(cell_box(0, dots))
     differing = sum(
         dots_differ(top_left.getpixel((x, y)), stand.getpixel((x, y))) for y in range(dots) for x in range(dots)
     )
     share = differing / (dots * dots)
     if share > MAX_STAND_DIFFERENCE:
-        return [f"the top-left frame differs from the stand in {share:.1%} of its dots (at most 5% allowed)"]
-    return []
+        return [f"the top-left frame differs from the stand in {share:.1%} of its dots (at most 5% allowed)"], share
+    return [], share
 
 
 def check_pixel(series, raw):
-    reasons, undetermined = judge_dot_size(raw, series["canvas_dots"], 1, 1)
-    return verdict(reasons, undetermined)
+    reasons, undetermined, measures = judge_dot_size(raw, series["canvas_dots"], 1, 1)
+    return verdict(reasons, undetermined, measures)
 
 
 def check_sheet(series, raw, frames, stand, align_feet):
     dots = series["canvas_dots"]
-    reasons, undetermined = judge_dot_size(raw, dots, SHEET_COLUMNS, sheet_rows(frames))
+    reasons, undetermined, measures = judge_dot_size(raw, dots, SHEET_COLUMNS, sheet_rows(frames))
     sampled = sample_sheet(raw, dots, frames)
-    reasons += judge_stand(sampled, stand, dots)
+    stand_reasons, measures["top_left_diff"] = judge_stand(sampled, stand, dots)
+    reasons += stand_reasons
     if align_feet:
         _, overflowing = ground_shifts(assemble_sheet(sampled, dots, frames, stand), dots, frames)
         if overflowing:
             reasons.append(overflow_message(overflowing))
-    return verdict(reasons, undetermined)
+    return verdict(reasons, undetermined, measures)
 
 
 def check_illustration(series, raw):
@@ -408,12 +411,14 @@ CHECKERS = {
 }
 
 
-def verdict(reasons, undetermined):
+def verdict(reasons, undetermined, measures=None):
+    """Any failed item fails the whole; otherwise any item that could not be judged leaves it undetermined."""
+    measures = {} if measures is None else measures
     if reasons:
-        return {"result": "fail", "reasons": reasons + undetermined}
+        return {"result": "fail", "reasons": reasons + undetermined, "measures": measures}
     if undetermined:
-        return {"result": "undetermined", "reasons": undetermined}
-    return {"result": "pass", "reasons": []}
+        return {"result": "undetermined", "reasons": undetermined, "measures": measures}
+    return {"result": "pass", "reasons": [], "measures": measures}
 
 
 def crop_to_ratio(image, size):

@@ -20,6 +20,8 @@ TEMPLATE_PIXELS_PER_DOT = 10
 DOT_SIZE_TOLERANCE = 0.10  # estimated dot size may differ from the expected one by this fraction
 MAX_STAND_DIFFERENCE = 0.05  # share of top-left dots allowed to differ from the stand
 COLOUR_DIFFERENCE = 60  # summed RGB difference above which two opaque dots differ
+CORNER_FRACTION = 0.02  # side of the corner squares that must be clear, as a share of each edge
+RATIO_TOLERANCE = 0.05  # a web raw's aspect ratio may differ from the size's by this fraction
 PEAK_CORRELATION = 0.3  # how far a repeating edge spacing must rise above the dip before it
 KINDS = ("pixel", "illustration", "web")
 REQUIRED_FIELDS = {
@@ -363,6 +365,47 @@ def check_sheet(series, raw, frames, stand, align_feet):
     return verdict(reasons, undetermined)
 
 
+def check_illustration(series, raw):
+    if not series["transparent"]:
+        return verdict([], [])
+    corner_width = math.ceil(raw.width * CORNER_FRACTION)
+    corner_height = math.ceil(raw.height * CORNER_FRACTION)
+    alpha = raw.getchannel("A")
+    corners = {
+        "top-left": (0, 0),
+        "top-right": (raw.width - corner_width, 0),
+        "bottom-left": (0, raw.height - corner_height),
+        "bottom-right": (raw.width - corner_width, raw.height - corner_height),
+    }
+    reasons = [
+        f"the {name} corner ({corner_width}x{corner_height} px) is not fully transparent"
+        for name, (left, top) in corners.items()
+        if alpha.crop((left, top, left + corner_width, top + corner_height)).getextrema()[1] > 0
+    ]
+    return verdict(reasons, [])
+
+
+def check_web(series, raw):
+    width, height = series["size"]
+    difference = (raw.width / raw.height) / (width / height) - 1
+    if abs(difference) > RATIO_TOLERANCE:
+        return verdict(
+            [
+                f"the aspect ratio {raw.width}x{raw.height} is {difference:+.1%} off {width}x{height}"
+                " (within 5% allowed), so the centre crop would cut too much"
+            ],
+            [],
+        )
+    return verdict([], [])
+
+
+CHECKERS = {
+    "pixel": check_pixel,
+    "illustration": check_illustration,
+    "web": check_web,
+}
+
+
 def verdict(reasons, undetermined):
     if reasons:
         return {"result": "fail", "reasons": reasons + undetermined}
@@ -477,10 +520,8 @@ def run_check(args):
     raw = load_image(args.raw)
     if stand is not None:
         outcome = check_sheet(series, raw, args.frames, stand, align_feet=not args.no_ground)
-    elif series["kind"] == "pixel":
-        outcome = check_pixel(series, raw)
     else:
-        raise InputError(f"check for kind {series['kind']} is not implemented")
+        outcome = CHECKERS[series["kind"]](series, raw)
     print(json.dumps(outcome, ensure_ascii=False))
     return 0
 

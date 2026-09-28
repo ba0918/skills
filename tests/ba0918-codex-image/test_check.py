@@ -159,3 +159,56 @@ def test_check_with_no_ground_does_not_judge_rising_above_the_cell_top(run, writ
     outcome = check_sheet(run, write_series, save_png, raw, stand, 8, "--no-ground")
 
     assert outcome == {"result": "pass", "reasons": []}
+
+
+def check_single(run, write_series, save_png, raw, **fields):
+    series = write_series(**fields)
+    return verdict(run("check", "--series", series, "--raw", save_png(raw, "raw.png")))
+
+
+@pytest.mark.parametrize("corner", [(0, 0), (499, 0), (0, 399), (499, 399), (9, 7)])
+def test_check_fails_a_transparent_illustration_with_an_opaque_pixel_near_a_corner(
+    run, write_series, save_png, corner
+):
+    raw = smooth_disc(400, 150)
+    canvas = blank(500, 400)
+    canvas.paste(raw, (50, 0))
+    canvas.putpixel(corner, (255, 255, 255, 255))  # (9, 7) is inside the 10x8 corner square
+
+    outcome = check_single(run, write_series, save_png, canvas, kind="illustration", size="1000x800", transparent="true")
+
+    assert outcome["result"] == "fail"
+    assert outcome["reasons"]
+
+
+def test_check_passes_a_transparent_illustration_whose_corners_are_clear(run, write_series, save_png):
+    canvas = blank(500, 400)
+    canvas.paste(smooth_disc(400, 150), (50, 0))
+    canvas.putpixel((10, 8), (255, 255, 255, 255))  # just outside the corner square
+
+    outcome = check_single(run, write_series, save_png, canvas, kind="illustration", size="1000x800", transparent="true")
+
+    assert outcome == {"result": "pass", "reasons": []}
+
+
+def test_check_passes_an_opaque_illustration_as_there_is_nothing_to_judge(run, write_series, save_png):
+    raw = Image.new("RGBA", (700, 300), (30, 30, 30, 255))
+
+    outcome = check_single(run, write_series, save_png, raw, kind="illustration", size="1000x800", transparent="false")
+
+    assert outcome == {"result": "pass", "reasons": []}
+
+
+@pytest.mark.parametrize(
+    "raw_size, expected",
+    [((1600, 900), "pass"), ((1650, 900), "pass"), ((1600, 940), "pass"), ((1800, 900), "fail"), ((1600, 1000), "fail")],
+)
+def test_check_judges_a_web_image_by_its_ratio_within_five_percent_of_the_size(
+    run, write_series, save_png, raw_size, expected
+):
+    raw = Image.new("RGB", raw_size, (200, 100, 50))
+
+    outcome = check_single(run, write_series, save_png, raw, kind="web", size="1920x1080")
+
+    assert outcome["result"] == expected
+    assert bool(outcome["reasons"]) == (expected == "fail")

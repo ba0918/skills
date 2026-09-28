@@ -5,17 +5,22 @@ Run with: uv run --with pillow scripts/codex_image.py <subcommand> ...
 """
 
 import argparse
+import json
 import math
 import re
 import sys
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageChops
 
 ALPHA_THRESHOLD = 128
 SHEET_COLUMNS = 4
 MIN_FRAMES, MAX_FRAMES = 2, 16
 TEMPLATE_PIXELS_PER_DOT = 10
+DOT_SIZE_TOLERANCE = 0.10  # estimated dot size may differ from the expected one by this fraction
+MAX_STAND_DIFFERENCE = 0.05  # share of top-left dots allowed to differ from the stand
+COLOUR_DIFFERENCE = 60  # summed RGB difference above which two opaque dots differ
+PEAK_CORRELATION = 0.3  # how far a repeating edge spacing must rise above the dip before it
 KINDS = ("pixel", "illustration", "web")
 REQUIRED_FIELDS = {
     "pixel": ("canvas_dots", "transparent"),
@@ -211,23 +216,159 @@ def apply_shifts(sheet, dots, shifts):
     return out
 
 
-def process_sheet(series, raw, frames, stand, align_feet):
-    dots = series["canvas_dots"]
-    sheet = harden_alpha(sample_grid(raw, dots * SHEET_COLUMNS, dots * sheet_rows(frames)))
+def sample_sheet(raw, dots, frames):
+    """The raw sheet picked on the expected dot grid, with alpha made fully opaque or transparent."""
+    return harden_alpha(sample_grid(raw, dots * SHEET_COLUMNS, dots * sheet_rows(frames)))
+
+
+def assemble_sheet(sampled, dots, frames, stand):
+    """Put the original stand back in the top-left cell and clear the cells after the last frame."""
+    sheet = sampled.copy()
     sheet.paste(stand, (0, 0))
     empty = Image.new("RGBA", (dots, dots), (0, 0, 0, 0))
     for index in range(frames, SHEET_COLUMNS * sheet_rows(frames)):
         sheet.paste(empty, cell_box(index, dots)[:2])
+    return sheet
+
+
+def overflow_message(overflowing):
+    return (
+        "aligning the feet would push frame "
+        + ", frame ".join(str(n) for n in overflowing)
+        + " above the top of its cell"
+    )
+
+
+def process_sheet(series, raw, frames, stand, align_feet):
+    dots = series["canvas_dots"]
+    sheet = assemble_sheet(sample_sheet(raw, dots, frames), dots, frames, stand)
     if not align_feet:
         return sheet
     shifts, overflowing = ground_shifts(sheet, dots, frames)
     if overflowing:
         raise InputError(
-            "aligning the feet would push frames "
-            + ", ".join(str(n) for n in overflowing)
-            + " above the top of their cells; regenerate the sheet or pass --no-ground if the motion leaves the ground"
+            overflow_message(overflowing)
+            + "; regenerate the sheet, or pass --no-ground if the motion leaves the ground"
         )
     return apply_shifts(sheet, dots, shifts)
+
+
+def edge_profile(image, axis):
+    """Summed colour and alpha change between neighbouring columns (axis 0) or rows (axis 1)."""
+    if axis == 1:
+        image = image.transpose(Image.TRANSPOSE)
+    width, height = image.size
+    if width < 2:
+        return []
+    change = ImageChops.difference(image.crop((1, 0, width, height)), image.crop((0, 0, width - 1, height)))
+    profile = [0.0] * (width - 1)
+    for band in change.split():
+        means = band.convert("F").resize((width - 1, 1), Image.BOX)
+        for x in range(width - 1):
+            profile[x] += means.getpixel((x, 0))
+    return profile
+
+
+def autocorrelation(profile):
+    mean = sum(profile) / len(profile)
+    centred = [value - mean for value in profile]
+    variance = sum(value * value for value in centred)
+    if variance <= 1e-9:
+        return None
+    return [
+        sum(centred[i] * centred[i + lag] for i in range(len(centred) - lag)) / variance
+        for lag in range(len(centred) // 2 + 2)
+    ]
+
+
+def strongest_near(correlation, lag):
+    """The highest correlation within one lag of lag: an uneven dot size spreads a peak over neighbours."""
+    if lag + 1 >= len(correlation):
+        return None
+    return max(correlation[lag - 1 : lag + 2])
+
+
+def estimate_dot_size(image, axis):
+    """The spacing of repeating edges along the axis in pixels, or None when no spacing repeats.
+
+    A spacing counts when its autocorrelation rises clearly above the dip before it and repeats
+    at twice the spacing; a smooth outline correlates at every short lag and never dips.
+    """
+    profile = edge_profile(image, axis)
+    correlation = autocorrelation(profile) if len(profile) >= 8 else None
+    if correlation is None:
+        return None
+    for lag in range(2, len(correlation) - 1):
+        value = correlation[lag]
+        if value < correlation[lag - 1] or value < correlation[lag + 1]:
+            continue
+        if value - min(correlation[lag // 2 : lag]) < PEAK_CORRELATION:
+            continue
+        harmonic = strongest_near(correlation, 2 * lag)
+        if harmonic is None or harmonic < PEAK_CORRELATION / 2:
+            continue
+        lags = (lag - 1, lag, lag + 1)
+        weights = [max(correlation[l], 0.0) for l in lags]
+        return sum(w * l for w, l in zip(weights, lags)) / sum(weights)
+    return None
+
+
+def judge_dot_size(raw, dots, columns, rows):
+    """Reasons the dot size fails, and whether it could be estimated at all."""
+    reasons, undetermined = [], []
+    for axis, name, length, count in ((0, "horizontal", raw.width, dots * columns), (1, "vertical", raw.height, dots * rows)):
+        expected = length / count
+        estimate = estimate_dot_size(raw, axis)
+        if estimate is None:
+            undetermined.append(f"the {name} dot size could not be estimated (expected {expected:.1f} px)")
+        elif abs(estimate - expected) > DOT_SIZE_TOLERANCE * expected:
+            reasons.append(
+                f"the {name} dot size is about {estimate:.1f} px, expected {expected:.1f} px within 10%"
+            )
+    return reasons, undetermined
+
+
+def dots_differ(a, b):
+    opaque_a, opaque_b = a[3] >= ALPHA_THRESHOLD, b[3] >= ALPHA_THRESHOLD
+    if opaque_a != opaque_b:
+        return True
+    return opaque_a and sum(abs(x - y) for x, y in zip(a[:3], b[:3])) > COLOUR_DIFFERENCE
+
+
+def judge_stand(sampled, stand, dots):
+    top_left = sampled.crop(cell_box(0, dots))
+    differing = sum(
+        dots_differ(top_left.getpixel((x, y)), stand.getpixel((x, y))) for y in range(dots) for x in range(dots)
+    )
+    share = differing / (dots * dots)
+    if share > MAX_STAND_DIFFERENCE:
+        return [f"the top-left frame differs from the stand in {share:.1%} of its dots (at most 5% allowed)"]
+    return []
+
+
+def check_pixel(series, raw):
+    reasons, undetermined = judge_dot_size(raw, series["canvas_dots"], 1, 1)
+    return verdict(reasons, undetermined)
+
+
+def check_sheet(series, raw, frames, stand, align_feet):
+    dots = series["canvas_dots"]
+    reasons, undetermined = judge_dot_size(raw, dots, SHEET_COLUMNS, sheet_rows(frames))
+    sampled = sample_sheet(raw, dots, frames)
+    reasons += judge_stand(sampled, stand, dots)
+    if align_feet:
+        _, overflowing = ground_shifts(assemble_sheet(sampled, dots, frames, stand), dots, frames)
+        if overflowing:
+            reasons.append(overflow_message(overflowing))
+    return verdict(reasons, undetermined)
+
+
+def verdict(reasons, undetermined):
+    if reasons:
+        return {"result": "fail", "reasons": reasons + undetermined}
+    if undetermined:
+        return {"result": "undetermined", "reasons": undetermined}
+    return {"result": "pass", "reasons": []}
 
 
 def crop_to_ratio(image, size):
@@ -299,6 +440,7 @@ def build_parser():
     check.add_argument("--raw", required=True)
     check.add_argument("--frames", type=int)
     check.add_argument("--stand")
+    check.add_argument("--no-ground", action="store_true")
 
     preview = sub.add_parser("preview")
     preview.add_argument("--sheet", required=True)
@@ -330,7 +472,16 @@ def run_process(args):
 
 
 def run_check(args):
-    parse_series(args.series)
+    series = parse_series(args.series)
+    stand = None if args.frames is None else animation_inputs(series, args.frames, args.stand)
+    raw = load_image(args.raw)
+    if stand is not None:
+        outcome = check_sheet(series, raw, args.frames, stand, align_feet=not args.no_ground)
+    elif series["kind"] == "pixel":
+        outcome = check_pixel(series, raw)
+    else:
+        raise InputError(f"check for kind {series['kind']} is not implemented")
+    print(json.dumps(outcome, ensure_ascii=False))
     return 0
 
 

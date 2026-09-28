@@ -106,7 +106,7 @@ What `process` does, by kind:
 | Kind | Post-processing |
 |---|---|
 | Pixel sprite | Takes the colour at the centre of each dot's cell. Keeps every colour. With `transparent: true`, alpha 128 and above becomes opaque and the rest fully transparent; with `false` the background stays |
-| Illustration (including pixel-style) | `transparent: true`: scaled to fit inside `size`, the rest filled with transparency, soft edges kept. `false`: cropped from the centre to the ratio of `size`, then scaled to `size` |
+| Illustration (including pixel-style) | `transparent: true`: shrunk to fit inside `size` — a raw image already smaller than `size` keeps its size, as enlarging would blur it — centred, the rest filled with transparency, soft edges kept. `false`: cropped from the centre to the ratio of `size`, then scaled to `size` |
 | Web image | Always opaque. Cropped from the centre to the ratio of `size`, then scaled to `size` |
 
 ## Series

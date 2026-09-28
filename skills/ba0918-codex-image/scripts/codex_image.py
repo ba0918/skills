@@ -478,10 +478,13 @@ def process_web(series, raw):
 
 
 def fit_within(image, size):
-    """Scale the whole image to fit inside size and centre it on a transparent canvas."""
+    """Shrink the whole image to fit inside size and centre it on a transparent canvas.
+
+    An image already inside size keeps its size: enlarging it would blur it.
+    """
     width, height = image.size
     target_width, target_height = size
-    scale = min(target_width / width, target_height / height)
+    scale = min(1.0, target_width / width, target_height / height)
     scaled_size = (max(1, round(width * scale)), max(1, round(height * scale)))
     scaled = image.resize(scaled_size, Image.LANCZOS)
     canvas = Image.new("RGBA", size, (0, 0, 0, 0))

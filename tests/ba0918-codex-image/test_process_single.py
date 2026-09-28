@@ -1,6 +1,6 @@
 from PIL import Image
 
-from conftest import blank, pixels, sprite
+from conftest import blank, figure, pixels, sprite
 
 
 def add_soft_fringe(image, scale):
@@ -96,6 +96,22 @@ def test_transparent_illustration_process_fits_the_size_and_keeps_semi_transpare
     assert final.getpixel((150, 150))[3] == 255
     assert all(final.getpixel((x, 0))[3] == 0 for x in range(300))  # padding above the fitted image
 
+
+
+def test_transparent_illustration_process_centres_a_raw_smaller_than_the_size_without_enlarging_it(
+    run, write_series, save_png, tmp_path
+):
+    raw = figure(100, 60)
+    series = write_series(kind="illustration", size="300x200", transparent="true")
+    out = tmp_path / "final.png"
+
+    result = run("process", "--series", series, "--raw", save_png(raw, "raw.png"), "--out", out)
+
+    assert result.returncode == 0, result.stderr
+    final = Image.open(out).convert("RGBA")
+    assert final.size == (300, 200)
+    assert pixels(final.crop((100, 70, 200, 130))) == pixels(raw)  # centred at its own size
+    assert sum(1 for (_, _, _, a) in pixels(final) if a) == 100 * 60  # transparent everywhere else
 
 def test_opaque_illustration_process_crops_from_the_centre_to_exactly_the_size(
     run, write_series, save_png, tmp_path

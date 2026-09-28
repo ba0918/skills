@@ -95,7 +95,7 @@ transparent: true
 
 `kind` は `pixel`（ドット絵）、`illustration`（イラスト。ドット絵風の一枚絵もこちら）、`web`（Web 素材）のどれかです。`pixel` には `canvas_dots` と `transparent`、`illustration` には `size`（例 `1024x1024`）と `transparent`、`web` には `size` が要ります。
 
-uv がない環境では、仮想環境に Pillow を入れ、その仮想環境の Python でスクリプトを直接動かせます。Debian 12 以降や Ubuntu 23.04 以降のように、システムの Python への `pip install` を断る環境でもこの手順で動きます。
+uv がない環境では、仮想環境に Pillow を入れ、その仮想環境の Python でスクリプトを直接動かせます。Debian 12 以降や Ubuntu 23.04 以降のように、システムの Python への `pip install` を断る環境でも、仮想環境の中なら Pillow を入れられます。ただし Debian や Ubuntu では、先に python3-venv パッケージ（Python のバージョンによっては `python3.12-venv` のような名前）を入れておかないと `python3 -m venv` が失敗します（例 `sudo apt install python3-venv`）。
 
 ```sh
 python3 -m venv <仮想環境のフォルダー>

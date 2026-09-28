@@ -157,8 +157,9 @@ When the series has no reference image yet:
 2. Write the front matter those answers give to a temporary `series.md` outside the project, so
    the candidates can be processed and checked.
 3. Generate three candidates from the style description alone, each varying the direction a
-   little (colour, proportions, and so on), without an attached image. Run `process` and `check`
-   on each. Do not retry candidates automatically; attach the reasons to any that failed.
+   little (colour, proportions, and so on), without an attached image and each in its own
+   working folder. Run `process` and `check` on each. Do not retry candidates automatically;
+   attach the reasons to any that failed.
 4. Show the three processed candidates and let the user choose one. Never choose for them.
 5. Save the chosen processed image as `reference.png` in the series folder, and write
    `series.md` there, with the front matter and a body describing what to carry over and what
@@ -235,9 +236,9 @@ For one asset:
    Add `--model` only when the user named a model; otherwise Codex's default is used. Leave out
    `--image` when there is no image to attach. Set no time limit: wait until Codex exits, however
    long it takes.
-5. **If Codex exits non-zero**, stop at once. Keep the working folder and tell the user where it
-   is and where the stderr file is. This does not count as a retry. Treat an exit of 0 that left
-   no `raw.png` in the working folder the same way.
+5. **If Codex exits non-zero, or exits 0 without leaving `raw.png` in the working folder**, stop
+   at once. Keep the working folder and tell the user where it is and where the stderr file is.
+   This does not count as a retry.
 6. **Check** `raw.png` with `check` (with `--frames`, `--stand`, and `--no-ground` as the asset
    needs). Retry as described in Acceptance and retries.
 7. **Process** the accepted raw image into `final.png`; for an animation, also make
@@ -260,6 +261,9 @@ For one asset:
 
 Sizes of illustrations and web images are not checked: `process` always produces `size`.
 
+The result is `fail` when any judged item fails. It is `undetermined` only when no item failed and
+some item could not be judged; otherwise it is `pass`.
+
 - **`fail`**: generate again automatically with the same prompt, at most twice. Keep each earlier
   raw image in a temporary folder outside the working folder, so the working folder again holds
   only the prompt and the image. When the third attempt also fails, hand over the best result
@@ -272,7 +276,8 @@ Sizes of illustrations and web images are not checked: `process` always produces
     latest attempt.
 - **`undetermined`**: not a failure. Do not retry; hand over the result and say that the check
   could not decide.
-- A non-zero Codex exit during retries stops everything, as in step 5 of the procedure.
+- A non-zero Codex exit, or an exit of 0 without `raw.png`, during retries stops everything, as
+  in step 5 of the procedure.
 - When `process` refuses a sheet because frames would leave the top of their cells — possible for
   a best result that failed that check — hand over the raw image with the reasons instead of a
   finished sheet.
@@ -286,7 +291,7 @@ automatic retries and have no limit; each one overwrites the previous result.
 | What | Where | How long |
 |---|---|---|
 | Series definition, reference image, assets | the series folder in the project | until the user deletes them; remakes overwrite, and git keeps earlier versions |
-| Working folder and attempt files | a temporary directory | deleted after success; kept only when Codex exits non-zero |
+| Working folder and attempt files | a temporary directory | deleted after success; kept only when Codex exits non-zero, or exits 0 without `raw.png` |
 | Codex's own copies of generated images and its sessions | Codex's home directory | left to Codex; never touch them |
 
 ## Where the user decides

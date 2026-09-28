@@ -253,7 +253,7 @@ For one asset:
 
 | Kind | Passes when |
 |---|---|
-| Pixel sprite | The estimated dot size is within 10% of the expected size, horizontally and vertically. When no dot size can be estimated, the result is `undetermined` |
+| Pixel sprite | The estimated dot size is within 10% of the expected size, horizontally and vertically; when no dot size can be estimated, this item is undetermined. With `transparent: true`, the four corner dots, picked on the expected grid, are transparent — in each frame, for a sheet |
 | Animation | As above, and the top-left cell picked on the expected grid differs from the stand image in at most 5% of its dots, and — unless `--no-ground` — aligning the feet pushes no frame above the top of its cell |
 | Illustration | With `transparent: true`, a small square at each corner is fully transparent. With `false` there is nothing to judge |
 | Web image | The raw image's aspect ratio is within 5% of the ratio of `size` |

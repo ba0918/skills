@@ -25,8 +25,8 @@ def verdict(result):
     return json.loads(result.stdout)
 
 
-def check_pixel(run, write_series, save_png, raw):
-    series = write_series(kind="pixel", canvas_dots=32, transparent="true")
+def check_pixel(run, write_series, save_png, raw, transparent="false"):
+    series = write_series(kind="pixel", canvas_dots=32, transparent=transparent)
     return verdict(run("check", "--series", series, "--raw", save_png(raw, "raw.png")))
 
 
@@ -266,3 +266,47 @@ def test_check_reports_no_measures_for_kinds_that_measure_nothing(run, write_ser
     outcome = check_single(run, write_series, save_png, raw, **fields)
 
     assert outcome["measures"] == {}
+
+
+CORNERS = ["top-left", "top-right", "bottom-left", "bottom-right"]
+
+
+def clear_corner_dots(image, pitch, keep=None):
+    """Make the corner dot of each corner transparent, except the corner named keep."""
+    out = image.copy()
+    right, bottom = image.width - pitch, image.height - pitch
+    boxes = dict(zip(CORNERS, [(0, 0), (right, 0), (0, bottom), (right, bottom)]))
+    for name, (left, top) in boxes.items():
+        if name != keep:
+            out.paste((0, 0, 0, 0), (left, top, left + pitch, top + pitch))
+    return out
+
+
+def test_check_passes_a_transparent_pixel_sprite_whose_corner_dots_are_transparent(run, write_series, save_png):
+    raw = clear_corner_dots(dot_grid(640, 640, 20, 20), 20)
+
+    outcome = check_pixel(run, write_series, save_png, raw, transparent="true")
+
+    assert (outcome["result"], outcome["reasons"]) == ("pass", [])
+
+
+@pytest.mark.parametrize("corner", CORNERS)
+def test_check_fails_a_transparent_pixel_sprite_with_an_opaque_corner_dot(run, write_series, save_png, corner):
+    raw = clear_corner_dots(dot_grid(640, 640, 20, 20), 20, keep=corner)
+
+    outcome = check_pixel(run, write_series, save_png, raw, transparent="true")
+
+    assert outcome["result"] == "fail"
+    assert outcome["reasons"]
+
+
+def test_check_fails_a_sheet_with_an_opaque_corner_dot_in_one_frame(run, write_series, save_png):
+    stand = sprite(DOTS)
+    painted = sprite(DOTS, seed=6)
+    painted.putpixel((DOTS - 1, DOTS - 1), (250, 250, 250, 255))
+    cells = [stand, sprite(DOTS, seed=5), painted, sprite(DOTS, seed=7)]
+
+    outcome = check_sheet(run, write_series, save_png, sheet(cells, DOTS, scale=10), stand, 4)
+
+    assert outcome["result"] == "fail"
+    assert outcome["reasons"]

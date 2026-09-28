@@ -352,8 +352,31 @@ def judge_stand(sampled, stand, dots):
     return [], share
 
 
+def opaque_corners(cell):
+    """Names of the cell's corner dots that are opaque."""
+    right, bottom = cell.width - 1, cell.height - 1
+    corners = {"top-left": (0, 0), "top-right": (right, 0), "bottom-left": (0, bottom), "bottom-right": (right, bottom)}
+    return [name for name, xy in corners.items() if cell.getpixel(xy)[3] >= ALPHA_THRESHOLD]
+
+
+def judge_corners(sampled, dots, frames=None):
+    """Reasons a transparent sprite, or each frame of a sheet, has an opaque corner dot."""
+    if frames is None:
+        corners = opaque_corners(sampled)
+        return [f"the {', '.join(corners)} corner dot is opaque, expected transparent"] if corners else []
+    reasons = []
+    for index in range(frames):
+        corners = opaque_corners(sampled.crop(cell_box(index, dots)))
+        if corners:
+            reasons.append(f"frame {index + 1}: the {', '.join(corners)} corner dot is opaque, expected transparent")
+    return reasons
+
+
 def check_pixel(series, raw):
-    reasons, undetermined, measures = judge_dot_size(raw, series["canvas_dots"], 1, 1)
+    dots = series["canvas_dots"]
+    reasons, undetermined, measures = judge_dot_size(raw, dots, 1, 1)
+    if series["transparent"]:
+        reasons += judge_corners(sample_grid(raw, dots, dots), dots)
     return verdict(reasons, undetermined, measures)
 
 
@@ -363,6 +386,7 @@ def check_sheet(series, raw, frames, stand, align_feet):
     sampled = sample_sheet(raw, dots, frames)
     stand_reasons, measures["top_left_diff"] = judge_stand(sampled, stand, dots)
     reasons += stand_reasons
+    reasons += judge_corners(sampled, dots, frames)
     if align_feet:
         _, overflowing = ground_shifts(assemble_sheet(sampled, dots, frames, stand), dots, frames)
         if overflowing:

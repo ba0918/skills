@@ -1,3 +1,4 @@
+import random
 import subprocess
 import sys
 from pathlib import Path
@@ -54,3 +55,15 @@ def blank(width, height, color=(0, 0, 0, 0)):
 
 def pixels(image):
     return [image.getpixel((x, y)) for y in range(image.height) for x in range(image.width)]
+
+
+def sprite(dots, seed=1):
+    """A dots x dots sprite: an opaque random-coloured disc on a fully transparent background."""
+    rng = random.Random(seed)
+    image = blank(dots, dots)
+    centre = (dots - 1) / 2
+    for y in range(dots):
+        for x in range(dots):
+            if (x - centre) ** 2 + (y - centre) ** 2 <= (dots * 0.4) ** 2:
+                image.putpixel((x, y), (rng.randrange(256), rng.randrange(256), rng.randrange(256), 255))
+    return image

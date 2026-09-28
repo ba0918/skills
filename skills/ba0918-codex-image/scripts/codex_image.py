@@ -5,6 +5,7 @@ Run with: uv run --with pillow scripts/codex_image.py <subcommand> ...
 """
 
 import argparse
+import math
 import re
 import sys
 from pathlib import Path
@@ -12,6 +13,9 @@ from pathlib import Path
 from PIL import Image
 
 ALPHA_THRESHOLD = 128
+SHEET_COLUMNS = 4
+MIN_FRAMES, MAX_FRAMES = 2, 16
+TEMPLATE_PIXELS_PER_DOT = 10
 KINDS = ("pixel", "illustration", "web")
 REQUIRED_FIELDS = {
     "pixel": ("canvas_dots", "transparent"),
@@ -120,6 +124,33 @@ def process_pixel(series, raw):
     return final.convert("RGB")
 
 
+def sheet_rows(frames):
+    return math.ceil(frames / SHEET_COLUMNS)
+
+
+def check_frames(frames):
+    if not MIN_FRAMES <= frames <= MAX_FRAMES:
+        raise InputError(f"--frames must be between {MIN_FRAMES} and {MAX_FRAMES}, got {frames}")
+
+
+def load_stand(path):
+    stand = load_image(path)
+    if stand.width != stand.height:
+        raise InputError(f"the stand image {path} must be square, got {stand.width}x{stand.height}")
+    return stand
+
+
+def make_template(stand, frames):
+    """The stand enlarged to 10 px per dot; with frames, placed in the top-left cell of an empty sheet."""
+    cell = stand.width * TEMPLATE_PIXELS_PER_DOT
+    large = stand.resize((cell, cell), Image.NEAREST)
+    if frames is None:
+        return large
+    sheet = Image.new("RGBA", (cell * SHEET_COLUMNS, cell * sheet_rows(frames)), (0, 0, 0, 0))
+    sheet.paste(large, (0, 0))
+    return sheet
+
+
 def crop_to_ratio(image, size):
     """Cut the largest centred region with the same aspect ratio as size."""
     width, height = image.size
@@ -199,6 +230,14 @@ def build_parser():
     return parser
 
 
+def run_template(args):
+    if args.frames is not None:
+        check_frames(args.frames)
+    stand = load_stand(args.stand)
+    save_image(make_template(stand, args.frames), args.out)
+    return 0
+
+
 def run_process(args):
     series = parse_series(args.series)
     raw = load_image(args.raw)
@@ -213,6 +252,7 @@ def run_check(args):
 
 
 COMMANDS = {
+    "template": run_template,
     "process": run_process,
     "check": run_check,
 }

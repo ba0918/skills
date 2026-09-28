@@ -1,20 +1,6 @@
-import random
-
 from PIL import Image
 
-from conftest import blank, pixels
-
-
-def sprite(dots, seed=1):
-    """A dots x dots sprite: an opaque random-coloured disc on a fully transparent background."""
-    rng = random.Random(seed)
-    image = blank(dots, dots)
-    centre = (dots - 1) / 2
-    for y in range(dots):
-        for x in range(dots):
-            if (x - centre) ** 2 + (y - centre) ** 2 <= (dots * 0.4) ** 2:
-                image.putpixel((x, y), (rng.randrange(256), rng.randrange(256), rng.randrange(256), 255))
-    return image
+from conftest import blank, pixels, sprite
 
 
 def add_soft_fringe(image, scale):

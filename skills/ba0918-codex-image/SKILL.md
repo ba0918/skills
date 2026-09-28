@@ -152,18 +152,23 @@ A pixel-sprite `reference.png` is the processed, finished sprite at its real siz
 
 When the series has no reference image yet:
 
-1. Ask, in one message, for what cannot be derived: the kind, the first size or canvas, whether
-   the background is transparent, and what the assets are for.
-2. Write the front matter those answers give to a temporary `series.md` outside the project, so
-   the candidates can be processed and checked.
+1. If the series folder already has a `series.md` (the user may have written it), use it as it
+   is: take the kind, size or canvas, and transparency from its front matter and the look from
+   its body, and do not ask about anything it defines. Ask, in one message, only for what it
+   leaves out. Without a `series.md`, ask in one message for what cannot be derived: the kind,
+   the first size or canvas, whether the background is transparent, and what the assets are for.
+2. Without an existing `series.md`, write the front matter those answers give to a temporary
+   `series.md` outside the project, so the candidates can be processed and checked. With one,
+   pass it to `process` and `check` directly.
 3. Generate three candidates from the style description alone, each varying the direction a
    little (colour, proportions, and so on), without an attached image and each in its own
    working folder. Run `process` and `check` on each. Do not retry candidates automatically;
    attach the reasons to any that failed.
 4. Show the three processed candidates and let the user choose one. Never choose for them.
-5. Save the chosen processed image as `reference.png` in the series folder, and write
-   `series.md` there, with the front matter and a body describing what to carry over and what
-   not.
+5. Save the chosen processed image as `reference.png` in the series folder. When there was no
+   `series.md`, write it there, with the front matter and a body describing what to carry over
+   and what not. Never overwrite an existing `series.md`; if it should change, show the change
+   and ask first.
 
 After that, assets are made one at a time with the reference. Make several candidates only when
 the user asks.

@@ -59,9 +59,11 @@ the user exactly what is missing:
 1. `codex --version` succeeds.
 2. `codex features list` shows `image_generation` as enabled.
 3. The post-processing script actually starts: `uv run --with pillow scripts/codex_image.py
-   --help` succeeds, or, when Pillow is installed, `python3 scripts/codex_image.py --help` does.
-   The script loads Pillow before printing its help, so this also catches Pillow failing to
-   install. Run every later step of the script the same way as the command that succeeded.
+   --help` succeeds, or, without uv, `<python> scripts/codex_image.py --help` does, where
+   `<python>` is the Python with Pillow the user named (such as `<venv>/bin/python` of a virtual
+   environment), or `python3` when they named none. The script loads Pillow before printing its
+   help, so this also catches Pillow failing to install. Run every later step of the script the
+   same way as the command that succeeded.
 4. For an animation: the series is `kind: pixel` with `transparent: true`, and the character's
    stand image `<character>/final.png` exists in the series folder (see Animation).
 
@@ -72,8 +74,8 @@ generation.
 
 `scripts/codex_image.py` in this skill's directory does every step whose result must be exact.
 Never do these steps by hand or with ad-hoc code. Run it with `uv run --with pillow
-scripts/codex_image.py ...` (use the script's full path when running from elsewhere), or with
-`python3` when Pillow is installed.
+scripts/codex_image.py ...` (use the script's full path when running from elsewhere), or with the
+Python that passed the check in Before generating.
 
 ```
 codex_image.py template --stand <PNG> [--frames <F>] --out <PNG>

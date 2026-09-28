@@ -95,14 +95,15 @@ transparent: true
 
 `kind` は `pixel`（ドット絵）、`illustration`（イラスト。ドット絵風の一枚絵もこちら）、`web`（Web 素材）のどれかです。`pixel` には `canvas_dots` と `transparent`、`illustration` には `size`（例 `1024x1024`）と `transparent`、`web` には `size` が要ります。
 
-uv がない環境では、Pillow を入れた Python でスクリプトを直接動かせます。
+uv がない環境では、仮想環境に Pillow を入れ、その仮想環境の Python でスクリプトを直接動かせます。Debian 12 以降や Ubuntu 23.04 以降のように、システムの Python への `pip install` を断る環境でもこの手順で動きます。
 
 ```sh
-python3 -m pip install pillow
-python3 <スキルのフォルダー>/scripts/codex_image.py --help
+python3 -m venv <仮想環境のフォルダー>
+<仮想環境のフォルダー>/bin/python -m pip install pillow
+<仮想環境のフォルダー>/bin/python <スキルのフォルダー>/scripts/codex_image.py --help
 ```
 
-Pillow が入っていれば、スキルは uv の代わりに `python3` でスクリプトを呼びます。
+エージェントには、この Python（`<仮想環境のフォルダー>/bin/python`）でスクリプトを呼ぶよう伝えてください。エージェントを起動する前に仮想環境を有効にしておけば（`. <仮想環境のフォルダー>/bin/activate`）、スキルが使う `python3` がこの Python になります。
 
 ## 開発者向け
 

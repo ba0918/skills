@@ -11,7 +11,7 @@ import re
 import sys
 from pathlib import Path
 
-from PIL import Image, ImageChops
+from PIL import GifImagePlugin, Image, ImageChops
 
 ALPHA_THRESHOLD = 128
 SHEET_COLUMNS = 4
@@ -518,8 +518,25 @@ def run_preview(args):
     if args.ms <= 0:
         raise InputError(f"--ms must be a positive number of milliseconds, got {args.ms}")
     images = preview_frames(load_image(args.sheet), args.frames)
-    save_image(images[0], args.out, save_all=True, append_images=images[1:], duration=args.ms, loop=0)
+    write_gif(images, args.out, args.ms)
     return 0
+
+
+def write_gif(images, path, ms):
+    """An endlessly looping GIF with one frame per image, each lasting ms.
+
+    Not Image.save(save_all=True): it merges identical consecutive frames into one longer frame,
+    so an animation that holds a pose would lose frames.
+    """
+    frames = [image.convert("P", palette=Image.Palette.ADAPTIVE) for image in images]
+    chunks, _ = GifImagePlugin.getheader(frames[0], info={"loop": 0, "duration": ms})
+    for frame in frames:
+        chunks += GifImagePlugin.getdata(frame, duration=ms, include_color_table=True)
+    chunks.append(b";")
+    try:
+        Path(path).write_bytes(b"".join(chunks))
+    except OSError as error:
+        raise InputError(f"cannot write {path}: {error}")
 
 
 def run_template(args):

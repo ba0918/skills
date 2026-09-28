@@ -29,3 +29,13 @@ def test_preview_makes_a_gif_of_the_frames_only_at_the_given_speed(save_png, run
 
     assert result.returncode == 0, result.stderr
     assert frame_durations(out) == [duration] * 6
+
+
+def test_preview_keeps_repeated_poses_as_separate_frames(save_png, run, tmp_path):
+    pose = place(figure(6, 10, seed=3), 5, 4, DOTS)
+    out = tmp_path / "preview.gif"
+
+    result = run("preview", "--sheet", save_png(sheet([pose] * 4, DOTS), "final.png"), "--frames", 4, "--out", out)
+
+    assert result.returncode == 0, result.stderr
+    assert frame_durations(out) == [120] * 4

@@ -30,14 +30,14 @@
 1. **スクリプトを先に、テスト駆動で作る。** 数値の仕様を守らせるのはスクリプトの役目で、
    `SKILL.md` はその呼び方を書く。呼び方（引数）が固まってから指示文書を書けば、書き直しが要らない。
    スクリプトのテストは T-01〜T-10（`#自動テスト`）と、この計画が名前を付けた追加のテスト
-   （T-11〜T-14、各ステップに記す）で、1 つの振る舞いに 1 つのテストを書く。追加のテストは、
+   （T-11〜T-14、各ステップに記す）と、仕様の T-15 で、1 つの振る舞いに 1 つのテストを書く。追加のテストは、
    仕様に書かれた規則のうち T-01〜T-10 が触れていないものだけを確かめる。
 2. **スクリプトの引数は、この計画で決める**（仕様の `#委任`）。次のとおりにする。
 
    ```
    codex_image.py template --stand <PNG> [--frames <F>] --out <PNG>
    codex_image.py process  --series <series.md> --raw <PNG> --out <PNG> [--frames <F> --stand <PNG>] [--no-ground]
-   codex_image.py check    --series <series.md> --raw <PNG> [--frames <F> --stand <PNG>]
+   codex_image.py check    --series <series.md> --raw <PNG> [--frames <F> --stand <PNG>] [--no-ground]
    codex_image.py preview  --sheet <PNG> --frames <F> --out <GIF> [--ms <N>]
    ```
 
@@ -51,7 +51,9 @@
      規則でコマ数から決まるので、別の引数にしない。`--frames` は 2〜16 で、アニメーションとして扱う
      ときは `--stand` が要る。`kind: pixel` かつ `transparent: true` の `series.md` でなければ、
      `--frames` は入力の誤りである（`#アニメーション`）。
-   - `--no-ground` は足元を揃えない指定である（ジャンプなど）。
+   - `--no-ground` は足元を揃えない指定である（ジャンプなど）。`check` にも同じ指定を渡し、渡されたときは
+     上端からのはみ出しを判定しない。`process` がはみ出しを見つけたときは、入力の誤りと同じく
+     0 以外で終わり、完成品を書かない。
    - 1 ドットのマス目が整数の px にならない元画像（1254px に 32 ドットなど）では、マス目 i の中心を
      `floor((i + 0.5) × 画像の幅 ÷ ドット数)` の px とする（縦も同じ）。
    - `check` は判定の JSON を標準出力に書いて終了コード 0 で終わる（`pass`・`fail`・`undetermined`
@@ -180,10 +182,10 @@ May change: `scripts/codex_image.py`、`tests/ba0918-codex-image/`。
 Done when: T-05 が通る。`--no-ground` を付けると足元が揃わない。コマ数より後ろの空いたコマは、
 元画像に何が描かれていても完成品では透明になる。
 Shown by: test — T-05、T-12（`--no-ground` を付けると、足元の高さが元画像のまま残る）、T-13（6 コマの
-シートで、7〜8 コマ目に描かれたものが完成品では透明になる）。
+シートで、7〜8 コマ目に描かれたものが完成品では透明になる）、T-15 の `process` の側（上端から
+はみ出すシートで、完成品を書かずに 0 以外で終わる）。
 Left to the implementer: 足元の位置の求め方（不透明なドットの一番下の行を使う、など）。
-Stop and hand back if: 足元を揃えると、コマの上端から体がはみ出すシートがありうる（はみ出した分の
-扱いは仕様にない）。
+Stop and hand back if: なし。
 
 ## Step 5 — 検収
 
@@ -193,7 +195,8 @@ Prerequisites: Step 2、Step 4（期待のマス目で拾う処理を使う）�
 May change: `scripts/codex_image.py`、`tests/ba0918-codex-image/`。
 Done when: T-06、T-07、T-08 の前半が通る。アニメーションで 1 ドットの大きさが `undetermined` の
 とき、左上のコマの判定に応じて全体が `fail` か `undetermined` になる。
-Shown by: test — T-06、T-07、T-08 の前半、T-14（一色で塗っただけのシートは 1 ドットの大きさを推定
+Shown by: test — T-06、T-07、T-08 の前半、T-15 の `check` の側（はみ出すシートで `fail` と理由を返し、
+`--no-ground` を渡すと、はみ出しでは不合格にしない）、T-14（一色で塗っただけのシートは 1 ドットの大きさを推定
 できない。その左上のコマが立ち絵と大きく違えば `fail`、左上のコマだけ立ち絵を描いておけば
 `undetermined` になる）。T-07 の「`check` の前後で画像が変わらない」は、元画像のファイルのバイトを
 前後で比べて確かめる。
@@ -276,7 +279,7 @@ Specification: [自動テスト](../spec/ba0918-codex-image.md#自動テスト)�
 [人手確認チェックリスト](../spec/ba0918-codex-image.md#人手確認チェックリスト)。
 Prerequisites: Step 1〜8。
 May change: Step 1〜8 と同じ範囲（直すところがあったときだけ）。
-Done when: テストのコマンドで T-01〜T-14 が通る。バリデータが通る。`skills/ba0918-codex-image/` に
+Done when: テストのコマンドで T-01〜T-15 が通る。バリデータが通る。`skills/ba0918-codex-image/` に
 テストのファイルがない。本文に他のスキルへの依存と絶対パスがない。利用者の環境の値がないことは、
 `rg` では網羅できないため、受け入れの C-01 で人が読んで確かめる。
 Shown by: check — 1. `uv run --with pytest --with pillow pytest tests/ba0918-codex-image`
@@ -298,9 +301,9 @@ Stop and hand back if: なし。
 | `#新しいシリーズの始め方`、`#ざっくりした指示の清書` | Step 7 | C-05、C-06（人手） |
 | `#種類ごとの後処理` | Step 2 | T-02〜T-04、T-08 の後半 |
 | `#アニメーション` | Step 3、Step 4、Step 6、Step 7 | T-05、T-09〜T-13、C-07（人手） |
-| `#検収と作り直し` | Step 5 | T-06〜T-08、T-14、C-08（人手） |
+| `#検収と作り直し` | Step 4、Step 5 | T-06〜T-08、T-14、T-15、C-08（人手） |
 | `#実行と後始末` | Step 7 | C-03（人手） |
-| `#後処理の入り口`、`#テスト` | Step 1〜6、Step 9 | T-01〜T-14、Step 9 の check |
+| `#後処理の入り口`、`#テスト` | Step 1〜6、Step 9 | T-01〜T-15、Step 9 の check |
 | `#保存する状態と寿命`、`#人の判断点` | Step 7 | 対応表、C-03、C-05〜C-08（人手） |
 | `#README` | Step 8 | 差分を読む、C-01 |
 

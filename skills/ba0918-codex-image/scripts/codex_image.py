@@ -22,6 +22,8 @@ MAX_STAND_DIFFERENCE = 0.05  # share of top-left dots allowed to differ from the
 COLOUR_DIFFERENCE = 60  # summed RGB difference above which two opaque dots differ
 CORNER_FRACTION = 0.02  # side of the corner squares that must be clear, as a share of each edge
 RATIO_TOLERANCE = 0.05  # a web raw's aspect ratio may differ from the size's by this fraction
+PREVIEW_SIDE = 256  # a preview frame is enlarged by whole steps to about this many pixels
+PREVIEW_BACKGROUND = (200, 200, 200, 255)
 PEAK_CORRELATION = 0.3  # how far a repeating edge spacing must rise above the dip before it
 KINDS = ("pixel", "illustration", "web")
 REQUIRED_FIELDS = {
@@ -91,9 +93,9 @@ def load_image(path):
         raise InputError(f"cannot read image {path}: {error}")
 
 
-def save_image(image, path):
+def save_image(image, path, **options):
     try:
-        image.save(path)
+        image.save(path, **options)
     except OSError as error:
         raise InputError(f"cannot write {path}: {error}")
 
@@ -461,6 +463,23 @@ PROCESSORS = {
 }
 
 
+def preview_frames(sheet, frames):
+    """The frames of a finished sheet, enlarged and laid on a plain background, in reading order."""
+    dots = sheet.width // SHEET_COLUMNS
+    if sheet.width % SHEET_COLUMNS or sheet.height != dots * sheet_rows(frames):
+        raise InputError(
+            f"a sheet of {frames} frames must be 4 cells wide and {sheet_rows(frames)} cells tall, "
+            f"got {sheet.width}x{sheet.height}"
+        )
+    scale = max(1, PREVIEW_SIDE // dots)
+    images = []
+    for index in range(frames):
+        cell = sheet.crop(cell_box(index, dots)).resize((dots * scale, dots * scale), Image.NEAREST)
+        backdrop = Image.new("RGBA", cell.size, PREVIEW_BACKGROUND)
+        images.append(Image.alpha_composite(backdrop, cell).convert("RGB"))
+    return images
+
+
 def build_parser():
     parser = argparse.ArgumentParser(prog="codex_image.py")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -492,6 +511,15 @@ def build_parser():
     preview.add_argument("--ms", type=int, default=120)
 
     return parser
+
+
+def run_preview(args):
+    check_frames(args.frames)
+    if args.ms <= 0:
+        raise InputError(f"--ms must be a positive number of milliseconds, got {args.ms}")
+    images = preview_frames(load_image(args.sheet), args.frames)
+    save_image(images[0], args.out, save_all=True, append_images=images[1:], duration=args.ms, loop=0)
+    return 0
 
 
 def run_template(args):
@@ -530,17 +558,14 @@ COMMANDS = {
     "template": run_template,
     "process": run_process,
     "check": run_check,
+    "preview": run_preview,
 }
 
 
 def main(argv=None):
     args = build_parser().parse_args(argv)
-    handler = COMMANDS.get(args.command)
-    if handler is None:
-        print(f"{args.command} is not implemented", file=sys.stderr)
-        return 2
     try:
-        return handler(args)
+        return COMMANDS[args.command](args)
     except InputError as error:
         print(f"error: {error}", file=sys.stderr)
         return 2

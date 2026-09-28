@@ -195,6 +195,9 @@ you build a prompt.
 - Name the asset with a short English name derived from the request (`bat`, `bat-attack`,
   `top-hero`), unless the user gave one, and say the name when generation starts. If a folder
   with that name already exists, ask whether to overwrite it as a remake before going on.
+- An asset name is one folder name directly under the series folder: no `/` or `\`, not `.` or
+  `..`, and not an absolute path. This keeps every output inside the series folder. When the user
+  gives a name that breaks this, generate nothing and ask for another name.
 
 ## Animation
 

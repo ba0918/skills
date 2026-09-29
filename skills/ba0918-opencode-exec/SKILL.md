@@ -127,6 +127,9 @@ Run this, in the working directory:
   that marker from the end of the variable.
 - **Not `--file`.** The prompt is not attached as a file. The prompt file stays where the caller
   put it, as the record of what was asked.
+- **Standard input is empty and closed.** Connect the process's standard input to an input that
+  is already at its end (on Unix-like systems, `/dev/null`), always. Never let it inherit this
+  session's standard input.
 - **Too long to start.** If the process cannot start because the prompt is too long, report
   that. Do not switch to another way of passing it.
 - **Output files.** Write stdout and stderr to two files in the output location, named uniquely
@@ -241,6 +244,12 @@ automatically could destroy work the person wanted, so the skill reports and sto
 
 **Why the output lives outside the repository.** Output files inside it would show up in the
 change list themselves and leave the repository dirty.
+
+**Why standard input is closed.** When standard input is not a terminal, `opencode run` reads
+it to the end and appends what it read to the message. An inherited input that never ends — a
+pipe or socket held open by the session that started the run — makes opencode wait forever
+before it sends anything, with no output and no CPU use; and an input that does carry data
+changes the prompt the caller wrote.
 
 **Why the output format is the default.** The caller reads the output and judges it; opencode's
 default output is readable as it is, and a structured format adds nothing the skill uses.

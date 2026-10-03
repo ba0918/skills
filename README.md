@@ -31,6 +31,7 @@ gh skill install ba0918/skills ba0918-handoff --agent <エージェント名> --
 
 | スキル | 何をするか |
 |---|---|
+| [ba0918-activity-report](skills/ba0918-activity-report) | 指定した期間の自分のコミットを、手元のリポジトリ（全ブランチ）と GitHub から横断して集めて分類し、グラフと平易な要約付きの HTML 1 枚にまとめる。同梱した見本の HTML に沿わせて、出力の構成と見た目を揃える |
 | [ba0918-codex-exec](skills/ba0918-codex-exec) | 呼び出し元が用意したプロンプトと環境で Codex CLI（`codex exec`）を 1 回実行し、終了コード、出力のファイル、変更のあったファイルの一覧を返す。名指しされたときだけ動く |
 | [ba0918-codex-image](skills/ba0918-codex-image) | Codex CLI の画像生成で、ゲームや Web サイトの画像素材（ドット絵、イラスト、Web 素材、アニメーションのシート）を作る。参照画像とスタイル定義でテイストを揃え、同梱のスクリプトで決まった後処理と自動の検収を通してから残す。名指しされたときだけ動く |
 | [ba0918-handoff](skills/ba0918-handoff) | 作業中の文脈を `.agents/HANDOFF.md` に保存し、次のセッションで読み込んで続きから始める |

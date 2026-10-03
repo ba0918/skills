@@ -22,7 +22,9 @@ sharing it is the user's call.
    repositories live if no directory is evident.
 2. **Collect from both sources.** Locally, for every git repository under that directory, run
    `git log --all --since <start> --until <end> --author <name-or-email>`. On GitHub, run
-   `gh search commits --author <login> --committer-date <start>..<end> --limit 1000`. Merge the
+   `gh search commits --author <login> --committer-date <start>..<end> --limit 1000`; a search
+   returns at most 1000 results, so when one comes back full, split its range (one day per search,
+   for example) and search again. Merge the
    two, deduplicate by commit SHA, name each repository from its `origin` URL so worktrees and
    extra clones fold together, and convert all times to the user's time zone. Local is the main
    source: GitHub search sees only default branches of indexed repositories and misses much.
